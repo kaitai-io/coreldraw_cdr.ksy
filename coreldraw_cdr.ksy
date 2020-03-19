@@ -18,10 +18,11 @@ doc: |
   A native file format of CorelDraw.
   Some test files are available here: https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/test_data/
 
-doc-ref: https://github.com/photopea/CDR-specification
-doc-ref: https://github.com/LibreOffice/libcdr/tree/master/src/lib
-doc-ref: https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/docs/specification.txt
-doc-ref: https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/
+doc-ref:
+  - https://github.com/photopea/CDR-specification
+  - https://github.com/LibreOffice/libcdr/tree/master/src/lib
+  - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/docs/specification.txt
+  - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/
 seq:
   - id: riff_chunk
     type: riff_chunk
@@ -38,7 +39,7 @@ types:
       - id: pad_byte
         size: chunk_size % 2
   chunks:
-    doc: Defined this type to be consistent with the unconsistent `cmpr` chunk
+    # Defined this type to be consistent with the unconsistent `cmpr` chunk
     seq:
       - id: chunks
         type: chunk
@@ -120,7 +121,6 @@ types:
         type: u4
       - id: height
         type: u4
-
       - id: color_plane_value
         type: u2
       - id: color_depth
@@ -241,7 +241,3 @@ types:
         repeat: eos
 
   not_supported: {}
-
-
-
-
