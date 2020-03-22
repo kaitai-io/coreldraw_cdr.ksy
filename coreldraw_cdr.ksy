@@ -67,7 +67,6 @@ types:
       - id: chunk_id
         type: str
         size: 4
-        pad-right: 0x20
       - id: chunk_size
         type: u4
       - id: chunk_data
@@ -88,7 +87,6 @@ types:
       - id: chunk_id
         type: str
         size: 4
-        pad-right: 0x20
       - id: chunk_size_index
         type: u4
       - id: chunk_data
@@ -168,7 +166,6 @@ types:
       - id: form_type
         type: str
         size: 4
-        pad-right: 0x20
       - id: chunks
         type:
           switch-on: form_type
@@ -186,7 +183,6 @@ types:
       - id: form_type
         type: str
         size: 4
-        pad-right: 0x20
       - id: chunks
         type:
           switch-on: form_type
