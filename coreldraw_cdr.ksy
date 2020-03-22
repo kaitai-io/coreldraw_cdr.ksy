@@ -105,11 +105,8 @@ types:
     seq:
       - id: version
         type: u2
-    instances:
-      cdr_version:
-        value: version / 100
   disp_chunk_data:
-    doc: 'TODO: calculate size of `indices`'
+    # TODO: replace with imported type from BMP spec
     seq:
       - id: unknown
         size: 4
@@ -135,32 +132,6 @@ types:
         type: u4
       - id: used_colors_num
         type: u4
-
-      - id: palette
-        type:
-          switch-on: compression
-          cases:
-            # 0: samples(color_depth)
-            _: not_supported
-        size: bitmap_size
-      - id: indices
-        size-eos: true
-  samples:
-    doc: Not sure if that works correctly
-    params:
-      - id: color_depth
-        type: u4
-    seq:
-      - id: samples
-        type:
-          switch-on: color_depth
-          cases:
-            2: b1
-            4: b4
-            8: b8
-            16: u2
-            32: u4
-        repeat: eos
   list_chunk_data:
     seq:
       - id: form_type
