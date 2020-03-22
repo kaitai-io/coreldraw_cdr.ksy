@@ -31,13 +31,13 @@ types:
     seq:
       - id: chunk_id
         contents: RIFF
-      - id: chunk_size
+      - id: len_body
         type: u4
-      - id: chunk_data
+      - id: body
         type: cdr_chunk_data
-        size: chunk_size
+        size: len_body
       - id: pad_byte
-        size: chunk_size % 2
+        size: len_body % 2
   chunks:
     # Defined this type to be consistent with the unconsistent `cmpr` chunk
     seq:
@@ -46,11 +46,11 @@ types:
         repeat: eos
   chunks_comp:
     params:
-      - id: block_sizes
-        type: struct
+      - id: block_lens
+        type: chunk_sizes
     seq:
       - id: chunks
-        type: chunk_comp(block_sizes.as<block_sizes>)
+        type: chunk_comp(block_lens)
         repeat: eos
   cdr_chunk_data:
     seq:
@@ -67,40 +67,40 @@ types:
       - id: chunk_id
         type: str
         size: 4
-      - id: chunk_size
+      - id: len_body
         type: u4
-      - id: chunk_data
+      - id: body
         type:
           switch-on: chunk_id
           cases:
             '"vrsn"': vrsn_chunk_data
             '"DISP"': disp_chunk_data
             '"LIST"': list_chunk_data
-        size: chunk_size
+        size: len_body
       - id: pad_byte
-        size: chunk_size % 2
+        size: len_body % 2
   chunk_comp:
     params:
-      - id: block_sizes
-        type: struct
+      - id: block_lens
+        type: chunk_sizes
     seq:
       - id: chunk_id
         type: str
         size: 4
-      - id: chunk_size_index
+      - id: len_body_index
         type: u4
-      - id: chunk_data
+      - id: body
         type:
           switch-on: chunk_id
           cases:
-            '"LIST"': list_chunk_data_comp(block_sizes)
+            '"LIST"': list_chunk_data_comp(block_lens)
             _: not_supported
-        size: chunk_size
+        size: len_body
       - id: pad_byte
-        size: chunk_size % 2
+        size: len_body % 2
     instances:
-      chunk_size:
-        value: block_sizes.as<block_sizes>.sizes[chunk_size_index]
+      len_body:
+        value: block_lens.sizes[len_body_index]
   vrsn_chunk_data:
     seq:
       - id: version
@@ -174,11 +174,10 @@ types:
             '"stlt"': not_supported
             _: chunks
         size-eos: true
-
   list_chunk_data_comp:
     params:
-      - id: block_sizes
-        type: struct
+      - id: block_lens
+        type: chunk_sizes
     seq:
       - id: form_type
         type: str
@@ -187,9 +186,8 @@ types:
         type:
           switch-on: form_type
           cases:
-            '"cmpr"': cmpr_special_chunk
             '"stlt"': not_supported
-            _: chunks_comp(block_sizes)
+            _: chunks_comp(block_lens)
         size-eos: true
 
   cmpr_special_chunk:
@@ -198,14 +196,13 @@ types:
         type: cmpr_size_pair
         repeat: expr
         repeat-expr: 2
-
       - id: cpng_first
-        type: cmpr_special_subchunk(0)
+        type: cmpr_special_subchunk(true)
         size: size_pairs[0].compressed
     instances:
       cpng_second:
-        pos: size_pairs.size * (4 + 4) + size_pairs[0].compressed
-        type: cmpr_special_subchunk(1)
+        pos: sizeof<cmpr_size_pair> * size_pairs.size + size_pairs[0].compressed
+        type: cmpr_special_subchunk(false)
         size: size_pairs[1].compressed
   cmpr_size_pair:
     seq:
@@ -215,8 +212,8 @@ types:
         type: u4
   cmpr_special_subchunk:
     params:
-      - id: index
-        type: s4
+      - id: is_first_cpng
+        type: bool
     seq:
       - id: chunk_id
         contents: CPng
@@ -224,13 +221,13 @@ types:
         contents: [0x01, 0x00, 0x04, 0x00]
       - id: chunk_data
         type:
-          switch-on: index
+          switch-on: is_first_cpng
           cases:
-            0: chunks_comp(_parent.cpng_second.chunk_data.as<block_sizes>)
-            1: block_sizes
+            true: chunks_comp(_parent.cpng_second.chunk_data.as<chunk_sizes>)
+            _: chunk_sizes
         size-eos: true
         process: zlib
-  block_sizes:
+  chunk_sizes:
     seq:
       - id: sizes
         type: u4
