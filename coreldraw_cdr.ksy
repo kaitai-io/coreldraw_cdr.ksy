@@ -1,7 +1,7 @@
 meta:
   id: coreldraw_cdr
   title: CorelDraw drawing
-  license: CC0-1.0
+  license: MIT
   application: CorelDraw
   file-extension: cdr
   xref:
