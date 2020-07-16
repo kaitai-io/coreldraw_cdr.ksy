@@ -1,0 +1,2 @@
+# Highlight ksy files as YAML on GitHub
+*.ksy linguist-language=yaml
