@@ -1,8 +1,8 @@
 meta:
   id: coreldraw_cdr
-  title: CorelDraw drawing
+  title: CorelDRAW drawing
   license: MIT
-  application: CorelDraw
+  application: CorelDRAW
   file-extension: cdr
   xref:
     justsolve: CorelDRAW
@@ -15,7 +15,7 @@ meta:
   # imports:
   #   - file_streams
 doc: |
-  A native file format of CorelDraw.
+  A native file format of CorelDRAW.
 
   Some test files (but only old CDR versions, the latest ones are X3 and
   CorelDRAW X3 was released in 2006) are available here:
@@ -539,7 +539,7 @@ types:
   flgs_chunk_data: {}
   mcfg_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2190
-    # mostly reverse-engineered from generated files using CorelDraw 9
+    # mostly reverse-engineered from generated files using CorelDRAW 9
     seq:
       - id: unknown0
         size: len_unknown0

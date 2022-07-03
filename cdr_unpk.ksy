@@ -1,6 +1,6 @@
 meta:
   id: cdr_unpk
-  title: A made up format for unpacked streams from >=X6 CorelDraw CDR file
+  title: A made up format for unpacked streams from >=X6 CorelDRAW .cdr file
   application: bin/cdr-unpk
   file-extension: cdr.unpk
   endian: be

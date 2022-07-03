@@ -1,2 +1,3 @@
 # coreldraw_cdr.ksy
-CDR (CorelDraw drawing) spec for Kaitai Struct
+
+CDR (CorelDRAW drawing) format specification for Kaitai Struct
