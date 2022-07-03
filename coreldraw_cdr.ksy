@@ -521,14 +521,22 @@ types:
       polygon_coords: {}
     enums:
       arg_type:
-        0x1e: loda_coords
-        0x14: fill_style
-        0x0a: line_style
-        0xc8: style
-        0x2af8: polygon_transform
-        0x1f40: opacity
-        0x64: waldo_trfd
-        0x4aba: page_size
+        10: line_style
+        20: fill_style
+        30: loda_coords
+        100: waldo_trfd
+        200: style
+        1000:
+          id: name
+          doc-ref: https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_const.py#L41
+        8000: opacity
+        11000: polygon_transform
+        12010:
+          id: gradient
+          doc-ref: https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_const.py#L46
+        19130:
+          id: page_size
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1817-L1818
       chunk_type:
         0x26: spline
         0x01: rectangle
