@@ -595,8 +595,6 @@ types:
       - id: scale_unit
         type: u2
         enum: unit
-      - id: debug_rest
-        size-eos: true
     types:
       old_page_size:
         seq:
