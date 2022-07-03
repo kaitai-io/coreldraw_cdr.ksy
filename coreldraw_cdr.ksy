@@ -105,14 +105,14 @@ types:
         doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L38-L49
         value: >-
           c == 0x20
-             ? 300
-             : c < 0x31
-               ? 0
-               : c < 0x3a
-                 ? 100 * (c - 0x30)
-                 : c < 0x41
-                   ? 0
-                   : 100 * (c - 0x37)
+            ? 300
+            : c < 0x31
+              ? 0
+              : c < 0x3a
+                ? 100 * (c - 0x30)
+                : c < 0x41
+                  ? 0
+                  : 100 * (c - 0x37)
   chunk:
     -webide-representation: '{chunk_id}'
     seq:
