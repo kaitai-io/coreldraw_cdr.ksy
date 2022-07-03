@@ -188,7 +188,6 @@ types:
             '"uidr"': uidr_chunk_data
             '"vpat"': vpat_chunk_data
             '"font"': font_chunk_data
-            '"stlt"': stlt_chunk_data
             '"txsm"': txsm_chunk_data
             '"udta"': udta_chunk_data
             '"styd"': styd_chunk_data
