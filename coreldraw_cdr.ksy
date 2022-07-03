@@ -483,7 +483,34 @@ types:
               value:
                 value: '_root.version < 1500 ? raw.as<coord>.value : raw.as<f8> / 254000.0'
       ellipse: {}
-      line_and_curve: {}
+      line_and_curve:
+        seq:
+          - id: num_points_raw
+            type: u2
+          - id: unknown
+            size: 2
+          - id: points
+            type: point
+            repeat: expr
+            repeat-expr: num_points
+          - id: point_types
+            type: u1
+            repeat: expr
+            repeat-expr: num_points
+        instances:
+          num_points:
+            value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
+          num_points_max:
+            value: '(_io.size - _io.pos) / (_root.precision_16bit ? sizeof<s2> : sizeof<s4>)'
+          point_size:
+            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + 1'
+        types:
+          point:
+            seq:
+              - id: first
+                type: coord
+              - id: second
+                type: coord
       path: {}
       artistic_text: {}
       bitmap: {}
