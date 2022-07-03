@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# A simple utility for concatenating unpacked streams from >=X16 CorelDraw .cdr file
+# A simple utility for concatenating unpacked streams from >=X6 CorelDraw .cdr file
 # (producing the .cdr.unpk file described by the cdr_unpk.ksy spec)
 
 [ -f "$1" ] || { echo "'$1' is not accessible file path" ; exit 1; }
@@ -10,7 +10,7 @@ echo "Inspecting file '$1':"
 
 if [[ $(file "$1" -b --mime-type) == "application/zip" ]]
 then
-    echo "ZIP archive detected, assuming CDR X16 format"
+    echo "ZIP archive detected, assuming CDR X6 format"
     extract_dir=$(dirname "$1")/$(basename "$1" .cdr)/
     unzip "$1" -d "$extract_dir"
 
@@ -43,7 +43,7 @@ then
 
 elif [[ $(file "$1" -b) == "RIFF (little-endian) data" ]]
 then
-    echo "Generic RIFF file detected, assuming CDR pre-X16 format"
+    echo "Generic RIFF file detected, assuming CDR pre-X6 format"
     printf "%s" "unpk" > "$output_file"
     cdr_size=$(wc -c < "$1")
     echo "'$1' size: $cdr_size"
