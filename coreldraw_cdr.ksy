@@ -361,21 +361,25 @@ types:
         params:
           - id: offs
             type: u4
-          - id: type
+          - id: type_raw
             type: u4
         instances:
+          # not using an enum parameter to achieve better experience in the Web IDE
+          type:
+            value: type_raw
+            enum: arg_type
           arg:
             pos: offs
             type:
               switch-on: type
               cases:
-                'arg_type::loda_coords.to_i': loda_coords
-                'arg_type::fill_style.to_i': fill_style
-                'arg_type::line_style.to_i': line_style
-                'arg_type::style.to_i': style
-                'arg_type::polygon_transform.to_i': polygon_transform
-                'arg_type::opacity.to_i': opacity
-                'arg_type::page_size.to_i': page_size
+                'arg_type::loda_coords': loda_coords
+                'arg_type::fill_style': fill_style
+                'arg_type::line_style': line_style
+                'arg_type::style': style
+                'arg_type::polygon_transform': polygon_transform
+                'arg_type::opacity': opacity
+                'arg_type::page_size': page_size
             # size-eos: true
 
       loda_coords:
