@@ -8,9 +8,7 @@ meta:
     justsolve: CorelDRAW
     pronom:
       - fmt/465
-    wikidata:
-      - Q939636
-      - Q142371
+    wikidata: Q939636
   encoding: ASCII
   endian: le
   # imports:
