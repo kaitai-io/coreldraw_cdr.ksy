@@ -549,6 +549,9 @@ types:
       - id: page_size
         if: v >= 400
         type: page_size
+      # FIXME: starting from here, the positions are completely off in newer CDR
+      # versions (so it's obviously reading garbage), there's probably some
+      # unknown data to skip
       - id: unknown1
         type: u2
       - id: orientation
