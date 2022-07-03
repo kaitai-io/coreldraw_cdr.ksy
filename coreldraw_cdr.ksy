@@ -114,6 +114,7 @@ types:
                    ? 0
                    : 100 * (c - 0x37)
   chunk:
+    -webide-representation: '{chunk_id}'
     seq:
       - id: chunk_id
         type: str
@@ -193,6 +194,7 @@ types:
             '"styd"': styd_chunk_data
         size-eos: true
   chunk_comp:
+    -webide-representation: '{chunk_id}'
     params:
       - id: block_lens
         type: chunk_sizes
