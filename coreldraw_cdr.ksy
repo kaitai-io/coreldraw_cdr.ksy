@@ -11,6 +11,7 @@ meta:
     wikidata: Q939636
   encoding: ASCII
   endian: le
+  # # Uncomment when it's imported from cdr_unpk.ksy (for X6+ versions)
   # imports:
   #   - file_streams
 doc: |
@@ -22,37 +23,14 @@ doc-ref:
   - https://github.com/LibreOffice/libcdr/tree/master/src/lib
   - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/docs/specification.txt
   - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/
+# # Uncomment when it's imported from cdr_unpk.ksy (for X6+ versions)
 # params:
 #   - id: streams
 #     type: file_streams
 seq:
   - id: riff_chunk
     type: riff_chunk
-  #   size: root_len
-  # - id: streams
-  #   type: slot
-  #   size: stream_lens[_index]
-  #   repeat: expr
-  #   repeat-expr: stream_lens.size
 instances:
-  # Using example file from https://www.online-convert.com/file-format/cdr#:~:text=Download%20example.cdr%20file
-  # unzipped to example/ folder
-  #
-  # Output from `ls -l example/content/data/` with files in the order
-  # specified in `example/content/dataFileList.dat`:
-  #
-  #   -rw-r--r-- 1 Petr Pučil 197121     312 Oct 14  2014 data1.dat
-  #   -rw-r--r-- 1 Petr Pučil 197121   11108 Oct 14  2014 Bitmaps.dat
-  #   -rw-r--r-- 1 Petr Pučil 197121   17349 Oct 14  2014 data2.dat
-  #   -rw-r--r-- 1 Petr Pučil 197121     451 Oct 14  2014 masterPage.dat
-  #   -rw-r--r-- 1 Petr Pučil 197121 1642871 Oct 14  2014 page1.dat
-  # root_len:
-  #   value: '51_204'
-  #   doc-ref: "wc -c example/content/root.dat | cut -d ' ' -f 1"
-  # stream_names:
-  #   value: '["data1.dat", "Bitmaps.dat", "data2.dat", "masterPage.dat", "page1.dat"]'
-  # stream_lens:
-  #   value: '[312, 11108, 17349, 451, 1642871]'
   version:
     value: 'riff_chunk.body.version'
     # value: >-
@@ -63,7 +41,6 @@ instances:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2415-L2418
     value: _root.version < 600
 types:
-  slot: {}
   riff_chunk:
     seq:
       - id: chunk_id
@@ -148,12 +125,12 @@ types:
         size: len_body
         if: not is_stream_redir or stream_number == 0xffffffff
     instances:
+      # # Uncomment when it's imported from cdr_unpk.ksy (for X6+ versions)
       # body_inst:
-      #   io: _root.streams[stream_number]._io
+      #   io: _root.streams.files[stream_number]._io
       #   pos: stream_offs
       #   type: chunk_body
       #   size: len_body
-      #   # type: slot
       #   if: is_stream_redir and stream_number != 0xffffffff
       len_body:
         value: 'is_stream_redir ? len_body_redir : _io.size'

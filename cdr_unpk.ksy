@@ -1,8 +1,7 @@
 meta:
   id: cdr_unpk
   title: A made up format for unpacked streams from >=X6 CorelDraw CDR file
-  application:
-    - bin/cdr-unpk
+  application: bin/cdr-unpk
   file-extension: cdr.unpk
   endian: be
   encoding: ascii
@@ -15,8 +14,8 @@ seq:
   - id: len_root
     type: u4
   - id: files
+    size: _io.size - magic._sizeof - len_root._sizeof - len_root
     type: file_streams
-    size: _io.size - len_root
   - id: root
-    type: coreldraw_cdr(files)
     size: len_root
+    type: coreldraw_cdr(files)

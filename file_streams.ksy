@@ -1,6 +1,8 @@
 meta:
   id: file_streams
   title: Type for cdr_unpk.ksy file streams
+  endian: be
+  encoding: ascii
 doc: |
   Avoids circular dependency cdr_unpk.ksy <-> coreldraw_cdr.ksy
 
@@ -16,14 +18,16 @@ seq:
     type: file
     repeat: eos
 types:
+  slot: {}
   file:
     seq:
       - id: len_name
         type: u1
       - id: name
-        type: str
         size: len_name
+        type: str
       - id: len_body
         type: u4
       - id: body
         size: len_body
+        type: slot
