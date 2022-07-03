@@ -7,8 +7,9 @@
 output_file="$(dirname "$1")/$(basename "$1" .cdr).cdr.unpk"
 
 echo "Inspecting file '$1':"
+mime_type=$(file "$1" -b --mime-type)
 
-if [[ $(file "$1" -b --mime-type) == "application/zip" ]]
+if [[ "$mime_type" == 'application/zip' || "$mime_type" == 'application/x-vnd.corel.zcf.draw.document+zip' ]]
 then
     echo "ZIP archive detected, assuming CDR X6 format"
     extract_dir=$(dirname "$1")/$(basename "$1" .cdr)/
