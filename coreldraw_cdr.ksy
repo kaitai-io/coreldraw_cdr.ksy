@@ -511,7 +511,7 @@ types:
               - id: unknown1
                 size: 7
               - id: num_dash
-                size: u1
+                type: u1
               - size: 0
                 if: ofs_dashes < 0
               - id: unknown2
@@ -1226,7 +1226,7 @@ types:
         types:
           skip:
             seq:
-              - id: lengh
+              - id: length
                 if: lookahead == 0x640
                 type: u4
               - id: unknown1
