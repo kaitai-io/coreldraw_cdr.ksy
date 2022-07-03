@@ -16,13 +16,16 @@ meta:
   #   - file_streams
 doc: |
   A native file format of CorelDraw.
-  Some test files are available here: https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/test_data/
+
+  Some test files (but only old CDR versions, the latest ones are X3 and
+  CorelDRAW X3 was released in 2006) are available here:
+  <https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/testing%20base/>
 
 doc-ref:
-  - https://github.com/photopea/CDR-specification
   - https://github.com/LibreOffice/libcdr/tree/master/src/lib
-  - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/docs/specification.txt
-  - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/
+  - https://github.com/sk1project/uniconvertor/blob/master/src/uc2/formats/cdr/cdr_model.py # rather don't use, very inferior to libcdr
+  - https://github.com/photopea/CDR-specification # incomplete, for basic overview only
+  - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py # very old and incomplete, but maybe as a curiosity
 # # Uncomment when it's imported from cdr_unpk.ksy (for X6+ versions)
 # params:
 #   - id: streams
