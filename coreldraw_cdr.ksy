@@ -113,32 +113,35 @@ types:
     #     value: '(chunk_id == "LIST" ? ":" + body.as<list_chunk_data>.form_type : "")'
     # -webide-representation: "{chunk_id}{chunk_debug}"
   chunk_wrapper:
+    doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2062-L2085
     seq:
       - id: stream_number
         type: u4
-        if: is_stream_redir
+        if: has_redir_data
       - id: len_body_redir
         type: u4
-        if: is_stream_redir
-      - id: stream_offs
+        if: has_redir_data
+      - id: ofs_body_external
         type: u4
-        if: is_stream_redir and stream_number != 0xffffffff
-      - id: body_seq
+        if: is_body_external
+      - id: body_local
         type: chunk_body
         size: len_body
-        if: not is_stream_redir or stream_number == 0xffffffff
+        if: not is_body_external
     instances:
       # # Uncomment when it's imported from cdr_unpk.ksy (for X6+ versions)
-      # body_inst:
+      # body_external:
       #   io: _root.streams.files[stream_number]._io
-      #   pos: stream_offs
-      #   type: chunk_body
+      #   pos: ofs_body_external
       #   size: len_body
-      #   if: is_stream_redir and stream_number != 0xffffffff
+      #   type: chunk_body
+      #   if: is_body_external
       len_body:
-        value: 'is_stream_redir ? len_body_redir : _io.size'
-      is_stream_redir:
+        value: 'has_redir_data ? len_body_redir : _io.size'
+      has_redir_data:
         value: '_root.version >= 1600 and _io.size == 0x10'
+      is_body_external:
+        value: 'has_redir_data and stream_number != 0xffff_ffff'
   chunk_body:
     seq:
       - id: body
