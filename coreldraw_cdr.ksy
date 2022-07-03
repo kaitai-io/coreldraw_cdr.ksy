@@ -13,8 +13,8 @@ meta:
       - Q142371
   encoding: ASCII
   endian: le
-  imports:
-    - file_streams
+  # imports:
+  #   - file_streams
 doc: |
   A native file format of CorelDraw.
   Some test files are available here: https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/test_data/
@@ -24,18 +24,18 @@ doc-ref:
   - https://github.com/LibreOffice/libcdr/tree/master/src/lib
   - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/docs/specification.txt
   - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/
-params:
-  - id: streams
-    type: file_streams
+# params:
+#   - id: streams
+#     type: file_streams
 seq:
   - id: riff_chunk
     type: riff_chunk
-    size: root_len
-  - id: streams
-    type: slot
-    size: stream_lens[_index]
-    repeat: expr
-    repeat-expr: stream_lens.size
+  #   size: root_len
+  # - id: streams
+  #   type: slot
+  #   size: stream_lens[_index]
+  #   repeat: expr
+  #   repeat-expr: stream_lens.size
 instances:
   # Using example file from https://www.online-convert.com/file-format/cdr#:~:text=Download%20example.cdr%20file
   # unzipped to example/ folder
@@ -48,13 +48,13 @@ instances:
   #   -rw-r--r-- 1 Petr Pučil 197121   17349 Oct 14  2014 data2.dat
   #   -rw-r--r-- 1 Petr Pučil 197121     451 Oct 14  2014 masterPage.dat
   #   -rw-r--r-- 1 Petr Pučil 197121 1642871 Oct 14  2014 page1.dat
-  root_len:
-    value: '51_204'
-    doc-ref: "wc -c example/content/root.dat | cut -d ' ' -f 1"
-  stream_names:
-    value: '["data1.dat", "Bitmaps.dat", "data2.dat", "masterPage.dat", "page1.dat"]'
-  stream_lens:
-    value: '[312, 11108, 17349, 451, 1642871]'
+  # root_len:
+  #   value: '51_204'
+  #   doc-ref: "wc -c example/content/root.dat | cut -d ' ' -f 1"
+  # stream_names:
+  #   value: '["data1.dat", "Bitmaps.dat", "data2.dat", "masterPage.dat", "page1.dat"]'
+  # stream_lens:
+  #   value: '[312, 11108, 17349, 451, 1642871]'
   version:
     value: 'riff_chunk.body.version'
     # value: >-
@@ -149,13 +149,13 @@ types:
         size: len_body
         if: not is_stream_redir or stream_number == 0xffffffff
     instances:
-      body_inst:
-        io: _root.streams[stream_number]._io
-        pos: stream_offs
-        type: chunk_body
-        size: len_body
-        # type: slot
-        if: is_stream_redir and stream_number != 0xffffffff
+      # body_inst:
+      #   io: _root.streams[stream_number]._io
+      #   pos: stream_offs
+      #   type: chunk_body
+      #   size: len_body
+      #   # type: slot
+      #   if: is_stream_redir and stream_number != 0xffffffff
       len_body:
         value: 'is_stream_redir ? len_body_redir : _io.size'
       is_stream_redir:
