@@ -1,0 +1,57 @@
+#!/bin/bash
+
+# A simple utility for concatenating unpacked streams from >=X6 CorelDraw .cdr file
+# (producing the .cdr.unpk file described by the cdr_unpk.ksy spec)
+
+[ -f "$1" ] || { echo "'$1' is not accessible file path" ; exit 1; }
+output_file="$(dirname "$1")/$(basename "$1" .cdr).cdr.unpk"
+
+echo "Inspecting file '$1':"
+
+if [[ $(file "$1" -b --mime-type) == "application/zip" ]]
+then
+    echo "ZIP archive detected, assuming CDR X6 format"
+    extract_dir=$(dirname "$1")/$(basename "$1" .cdr)/
+    unzip "$1" -d "$extract_dir"
+
+    [ -f "$extract_dir/content/root.dat" ] || { echo "file 'content/root.dat' does not exist in the archive" ; exit 1; }
+    printf "%s" "unpk" > "$output_file"
+    root_size=$(wc -c < "$extract_dir/content/root.dat")
+    echo "'root.dat' size: $root_size"
+    printf "%.8x" "$root_size" | xxd -r -p >> "$output_file"
+
+    [ -f "$extract_dir/content/dataFileList.dat" ] || { echo "file 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
+
+    while IFS= read -r line || [[ -n $line ]]
+    do
+        [ -f "$extract_dir/content/data/$line" ] || { echo "file 'content/data/$line' listed in 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
+        len_name=$(printf "%s" "$line" | wc -c)
+        printf "%.2x" "$len_name" | xxd -r -p >> "$output_file"
+        printf "%s" "$line" >> "$output_file"
+
+        file_size=$(wc -c < "$extract_dir/content/data/$line")
+        echo "'data/$line' size: $file_size"
+        printf "%.8x" "$file_size" | xxd -r -p >> "$output_file"
+        cat "$extract_dir/content/data/$line" >> "$output_file"
+
+    done < "$extract_dir/content/dataFileList.dat"
+
+    cat "$extract_dir/content/root.dat" >> "$output_file"
+
+    final_size=$(wc -c < "$output_file")
+    echo "Done, output file: '$output_file', size: $final_size"
+
+elif [[ $(file "$1" -b) == "RIFF (little-endian) data" ]]
+then
+    echo "Generic RIFF file detected, assuming CDR pre-X6 format"
+    printf "%s" "unpk" > "$output_file"
+    cdr_size=$(wc -c < "$1")
+    echo "'$1' size: $cdr_size"
+    printf "%.8x" "$cdr_size" | xxd -r -p >> "$output_file"
+    cat "$1" >> "$output_file"
+
+    final_size=$(wc -c < "$output_file")
+    echo "Done, output file: '$output_file', size: $final_size"
+else
+    echo "Not CDR format at all (\`file\` says '$(file "$1" -b)'), stopping"
+fi
