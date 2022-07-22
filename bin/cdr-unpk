@@ -17,40 +17,55 @@ if [[
     || "$mime_type" == 'application/x-vnd.corel.zcf.draw.document+zip' # >=X7 in file-5.42
 ]]
 then
-    echo "ZIP archive detected, assuming CDR X6 format"
+    echo "ZIP archive detected"
     extract_dir=$(dirname "$1")/$cdr_basename/
     unzip "$1" -d "$extract_dir"
 
-    [ -f "$extract_dir/content/root.dat" ] || { echo "file 'content/root.dat' does not exist in the archive" ; exit 1; }
+    if [ -f "$extract_dir/content/riffData.cdr" ]
+    then
+        root_file='content/riffData.cdr'
+        echo "  -> has '$root_file' (X4 or X5 version)"
+    elif [ -f "$extract_dir/content/root.dat" ]
+    then
+        root_file='content/root.dat'
+        echo "  -> has '$root_file' (X6+ version)"
+    else
+        echo "there is no 'content/riffData.cdr' or 'content/root.dat' in the ZIP archive"
+        exit 1
+    fi
+
     printf "%s" "unpk" > "$output_file"
-    root_size=$(wc -c < "$extract_dir/content/root.dat")
-    echo "'root.dat' size: $root_size"
+    root_size=$(wc -c < "$extract_dir/$root_file")
+    echo "'$root_file' size: $root_size"
     printf "%.8x" "$root_size" | xxd -r -p >> "$output_file"
 
-    [ -f "$extract_dir/content/dataFileList.dat" ] || { echo "file 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
+    if [[ $root_file == 'content/root.dat' ]]
+    then
+        [ -f "$extract_dir/content/dataFileList.dat" ] || { echo "file 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
 
-    while IFS= read -r line || [[ -n $line ]]
-    do
-        [ -f "$extract_dir/content/data/$line" ] || { echo "file 'content/data/$line' listed in 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
-        len_name=$(printf "%s" "$line" | wc -c)
-        printf "%.2x" "$len_name" | xxd -r -p >> "$output_file"
-        printf "%s" "$line" >> "$output_file"
+        while IFS= read -r line || [[ -n $line ]]
+        do
+            [ -f "$extract_dir/content/data/$line" ] || { echo "file 'content/data/$line' listed in 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
+            len_name=$(printf "%s" "$line" | wc -c)
+            printf "%.2x" "$len_name" | xxd -r -p >> "$output_file"
+            printf "%s" "$line" >> "$output_file"
 
-        file_size=$(wc -c < "$extract_dir/content/data/$line")
-        echo "'data/$line' size: $file_size"
-        printf "%.8x" "$file_size" | xxd -r -p >> "$output_file"
-        cat "$extract_dir/content/data/$line" >> "$output_file"
+            file_size=$(wc -c < "$extract_dir/content/data/$line")
+            echo "'content/data/$line' size: $file_size"
+            printf "%.8x" "$file_size" | xxd -r -p >> "$output_file"
+            cat "$extract_dir/content/data/$line" >> "$output_file"
 
-    done < "$extract_dir/content/dataFileList.dat"
+        done < "$extract_dir/content/dataFileList.dat"
+    fi
 
-    cat "$extract_dir/content/root.dat" >> "$output_file"
+    cat "$extract_dir/$root_file" >> "$output_file"
 
     final_size=$(wc -c < "$output_file")
     echo "Done, output file: '$output_file', size: $final_size"
 
 elif [[ $(file "$1" -b) == 'RIFF (little-endian) data'* ]]
 then
-    echo "Generic RIFF file detected, assuming CDR pre-X6 format"
+    echo "RIFF file detected, assuming CDR pre-X4 version"
     printf "%s" "unpk" > "$output_file"
     cdr_size=$(wc -c < "$1")
     echo "'$1' size: $cdr_size"
