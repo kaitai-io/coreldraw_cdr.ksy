@@ -3,6 +3,11 @@
 # A simple utility for concatenating unpacked streams from >=X6 CorelDRAW .cdr file
 # (producing the .cdr.unpk file described by the cdr_unpk.ksy spec)
 
+print_file_size()
+{
+    echo "$1 size: $2 ($(LC_ALL=C numfmt --to=iec-i --suffix=B --format="%.1f" "$2"))"
+}
+
 [ -f "$1" ] || { echo "'$1' is not accessible file path" ; exit 1; }
 cdr_basename=$(basename "$1")
 cdr_basename=${cdr_basename%.[cC][dD][rR]}
@@ -36,7 +41,7 @@ then
 
     printf "%s" "unpk" > "$output_file"
     root_size=$(wc -c < "$extract_dir/$root_file")
-    echo "'$root_file' size: $root_size"
+    print_file_size "'$root_file'" "$root_size"
     printf "%.8x" "$root_size" | xxd -r -p >> "$output_file"
 
     if [[ $root_file == 'content/root.dat' ]]
@@ -51,7 +56,7 @@ then
             printf "%s" "$line" >> "$output_file"
 
             file_size=$(wc -c < "$extract_dir/content/data/$line")
-            echo "'content/data/$line' size: $file_size"
+            print_file_size "'content/data/$line'" "$file_size"
             printf "%.8x" "$file_size" | xxd -r -p >> "$output_file"
             cat "$extract_dir/content/data/$line" >> "$output_file"
 
@@ -61,19 +66,19 @@ then
     cat "$extract_dir/$root_file" >> "$output_file"
 
     final_size=$(wc -c < "$output_file")
-    echo "Done, output file: '$output_file', size: $final_size"
+    print_file_size "Done, output file: '$output_file'," "$final_size"
 
 elif [[ $(file "$1" -b) == 'RIFF (little-endian) data'* ]]
 then
     echo "RIFF file detected, assuming CDR pre-X4 version"
     printf "%s" "unpk" > "$output_file"
     cdr_size=$(wc -c < "$1")
-    echo "'$1' size: $cdr_size"
+    print_file_size "'$1'" "$cdr_size"
     printf "%.8x" "$cdr_size" | xxd -r -p >> "$output_file"
     cat "$1" >> "$output_file"
 
     final_size=$(wc -c < "$output_file")
-    echo "Done, output file: '$output_file', size: $final_size"
+    print_file_size "Done, output file: '$output_file'," "$final_size"
 else
     echo "Not CDR format at all (\`file\` says '$(file "$1" -b)'), stopping"
     exit 1
