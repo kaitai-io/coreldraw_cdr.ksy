@@ -23,8 +23,9 @@ if [[
 ]]
 then
     echo "ZIP archive detected"
-    extract_dir=$(dirname "$1")/$cdr_basename/
-    unzip "$1" -d "$extract_dir"
+    extract_dir=$(dirname "$1")/$cdr_basename
+    mkdir -p "$extract_dir/content"
+    unzip -j "$1" 'content/*' -d "$extract_dir/content"
 
     if [ -f "$extract_dir/content/riffData.cdr" ]
     then
@@ -47,6 +48,8 @@ then
     if [[ $root_file == 'content/root.dat' ]]
     then
         [ -f "$extract_dir/content/dataFileList.dat" ] || { echo "file 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
+        mkdir -p "$extract_dir/content/data"
+        unzip -j "$1" 'content/data/*' -d "$extract_dir/content/data"
 
         while IFS= read -r line || [[ -n $line ]]
         do
