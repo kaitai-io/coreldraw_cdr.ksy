@@ -4,7 +4,9 @@
 # (producing the .cdr.unpk file described by the cdr_unpk.ksy spec)
 
 [ -f "$1" ] || { echo "'$1' is not accessible file path" ; exit 1; }
-output_file="$(dirname "$1")/$(basename "$1" .cdr).cdr.unpk"
+cdr_basename=$(basename "$1")
+cdr_basename=${cdr_basename%.[cC][dD][rR]}
+output_file="$(dirname "$1")/$cdr_basename.cdr.unpk"
 
 echo "Inspecting file '$1':"
 mime_type=$(file "$1" -b --mime-type)
@@ -16,7 +18,7 @@ if [[
 ]]
 then
     echo "ZIP archive detected, assuming CDR X6 format"
-    extract_dir=$(dirname "$1")/$(basename "$1" .cdr)/
+    extract_dir=$(dirname "$1")/$cdr_basename/
     unzip "$1" -d "$extract_dir"
 
     [ -f "$extract_dir/content/root.dat" ] || { echo "file 'content/root.dat' does not exist in the archive" ; exit 1; }
