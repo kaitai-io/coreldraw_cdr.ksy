@@ -5,7 +5,7 @@
 
 print_file_size()
 {
-    echo "$1 size: $2 ($(LC_ALL=C numfmt --to=iec-i --suffix=B --format="%.1f" "$2"))"
+    echo "$1 size: $2 ($(LC_ALL=C numfmt --to=iec-i --suffix=B --format='%.1f' "$2"))"
 }
 
 [ -f "$1" ] || { echo "'$1' is not accessible file path" ; exit 1; }
@@ -17,9 +17,9 @@ echo "Inspecting file '$1':"
 mime_type=$(file "$1" -b --mime-type)
 
 if [[
-    "$mime_type" == 'application/zip' # X4-X6 with no 'mimetype' file in file-5.42, >=X4 in older versions of file(1)
-    || "$mime_type" == 'application/x-vnd.corel.draw.document+zip' # X6 in file-5.42
-    || "$mime_type" == 'application/x-vnd.corel.zcf.draw.document+zip' # >=X7 in file-5.42
+    $mime_type == 'application/zip' # X4-X6 with no 'mimetype' file in file-5.42, >=X4 in older versions of file(1)
+    || $mime_type == 'application/x-vnd.corel.draw.document+zip' # X6 in file-5.42
+    || $mime_type == 'application/x-vnd.corel.zcf.draw.document+zip' # >=X7 in file-5.42
 ]]
 then
     echo "ZIP archive detected"
@@ -39,10 +39,10 @@ then
         exit 1
     fi
 
-    printf "%s" "unpk" > "$output_file"
+    printf '%s' 'unpk' > "$output_file"
     root_size=$(wc -c < "$extract_dir/$root_file")
     print_file_size "'$root_file'" "$root_size"
-    printf "%.8x" "$root_size" | xxd -r -p >> "$output_file"
+    printf '%.8x' "$root_size" | xxd -r -p >> "$output_file"
 
     if [[ $root_file == 'content/root.dat' ]]
     then
@@ -51,13 +51,13 @@ then
         while IFS= read -r line || [[ -n $line ]]
         do
             [ -f "$extract_dir/content/data/$line" ] || { echo "file 'content/data/$line' listed in 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
-            len_name=$(printf "%s" "$line" | wc -c)
-            printf "%.2x" "$len_name" | xxd -r -p >> "$output_file"
-            printf "%s" "$line" >> "$output_file"
+            len_name=$(printf '%s' "$line" | wc -c)
+            printf '%.2x' "$len_name" | xxd -r -p >> "$output_file"
+            printf '%s' "$line" >> "$output_file"
 
             file_size=$(wc -c < "$extract_dir/content/data/$line")
             print_file_size "'content/data/$line'" "$file_size"
-            printf "%.8x" "$file_size" | xxd -r -p >> "$output_file"
+            printf '%.8x' "$file_size" | xxd -r -p >> "$output_file"
             cat "$extract_dir/content/data/$line" >> "$output_file"
 
         done < "$extract_dir/content/dataFileList.dat"
@@ -71,10 +71,10 @@ then
 elif [[ $(file "$1" -b) == 'RIFF (little-endian) data'* ]]
 then
     echo "RIFF file detected, assuming CDR pre-X4 version"
-    printf "%s" "unpk" > "$output_file"
+    printf '%s' 'unpk' > "$output_file"
     cdr_size=$(wc -c < "$1")
     print_file_size "'$1'" "$cdr_size"
-    printf "%.8x" "$cdr_size" | xxd -r -p >> "$output_file"
+    printf '%.8x' "$cdr_size" | xxd -r -p >> "$output_file"
     cat "$1" >> "$output_file"
 
     final_size=$(wc -c < "$output_file")
