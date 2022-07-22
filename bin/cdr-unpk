@@ -9,7 +9,11 @@ output_file="$(dirname "$1")/$(basename "$1" .cdr).cdr.unpk"
 echo "Inspecting file '$1':"
 mime_type=$(file "$1" -b --mime-type)
 
-if [[ "$mime_type" == 'application/zip' || "$mime_type" == 'application/x-vnd.corel.zcf.draw.document+zip' ]]
+if [[
+    "$mime_type" == 'application/zip' # X4-X6 with no 'mimetype' file in file-5.42, >=X4 in older versions of file(1)
+    || "$mime_type" == 'application/x-vnd.corel.draw.document+zip' # X6 in file-5.42
+    || "$mime_type" == 'application/x-vnd.corel.zcf.draw.document+zip' # >=X7 in file-5.42
+]]
 then
     echo "ZIP archive detected, assuming CDR X6 format"
     extract_dir=$(dirname "$1")/$(basename "$1" .cdr)/
@@ -42,7 +46,7 @@ then
     final_size=$(wc -c < "$output_file")
     echo "Done, output file: '$output_file', size: $final_size"
 
-elif [[ $(file "$1" -b) == "RIFF (little-endian) data" ]]
+elif [[ $(file "$1" -b) == 'RIFF (little-endian) data'* ]]
 then
     echo "Generic RIFF file detected, assuming CDR pre-X6 format"
     printf "%s" "unpk" > "$output_file"
