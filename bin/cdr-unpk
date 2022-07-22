@@ -61,4 +61,5 @@ then
     echo "Done, output file: '$output_file', size: $final_size"
 else
     echo "Not CDR format at all (\`file\` says '$(file "$1" -b)'), stopping"
+    exit 1
 fi
