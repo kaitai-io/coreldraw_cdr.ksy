@@ -203,7 +203,9 @@ types:
         size: len_body % 2
     instances:
       len_body:
-        value: block_lens.sizes[len_body_index]
+        io: block_lens._io
+        pos: len_body_index * sizeof<u4>
+        type: u4
     #   chunk_debug:
     #     value: '(chunk_id == "LIST" ? ":" + chunk_data.as<list_chunk_data_comp>.form_type : "")'
     # -webide-representation: "{chunk_id}{chunk_debug}"
@@ -714,10 +716,24 @@ types:
         size-eos: true
         process: zlib
   chunk_sizes:
-    seq:
-      - id: sizes
-        type: u4
-        repeat: eos
+    doc: |
+      A pool of `u4` chunk sizes, repeating until the end of stream. Once you
+      know the index into this pool, you would parse a `u4` integer at offset
+      `chunk_size_idx * sizeof<u4>` in the `_io` substream of this type.
+
+      Previously, this type looked like this:
+
+      ```ksy
+      seq:
+        - id: sizes
+          type: u4
+          repeat: eos
+      ````
+
+      and one would access the size as `sizes[chunk_size_idx]`. However, this
+      caused major issues e.g. when trying to dump all parsed data to JSON,
+      because the entire array of sizes was copied into each chunk in the dump,
+      since it had to be passed to all chunks as a parameter.
 
   coord:
     seq:
