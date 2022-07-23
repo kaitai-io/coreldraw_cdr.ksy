@@ -14,7 +14,7 @@ seq:
   - id: len_root
     type: u4
   - id: files
-    size: _io.size - magic._sizeof - len_root._sizeof - len_root
+    size: _io.size - _io.pos - len_root
     type: file_streams
   - id: root
     size: len_root
