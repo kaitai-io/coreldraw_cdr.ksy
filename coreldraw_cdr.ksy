@@ -131,7 +131,7 @@ types:
     instances:
       # # Uncomment when it's imported from cdr_unpk.ksy (for X6+ versions)
       # body_external:
-      #   io: _root.streams.files[stream_number]._io
+      #   io: _root.streams.files[stream_number].body._io
       #   pos: ofs_body_external
       #   size: len_body
       #   type: chunk_body
