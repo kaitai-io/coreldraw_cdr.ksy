@@ -276,7 +276,7 @@ types:
           cases:
             true: u2
             _: u4
-        # valid: _io.size
+        valid: _io.size
       - id: num_of_args
         type:
           switch-on: _root.precision_16bit
