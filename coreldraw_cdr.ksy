@@ -11,7 +11,7 @@ meta:
     wikidata: Q939636
   encoding: ASCII
   endian: le
-  # # Uncomment when it's imported from cdr_unpk.ksy (for X6+ versions)
+  # # Uncomment when imported from cdr_unpk.ksy (for X6+ versions)
   # imports:
   #   - file_streams
 doc: |
@@ -26,7 +26,7 @@ doc-ref:
   - https://github.com/sk1project/uniconvertor/blob/master/src/uc2/formats/cdr/cdr_model.py # rather don't use, very inferior to libcdr
   - https://github.com/photopea/CDR-specification # incomplete, for basic overview only
   - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py # very old and incomplete, but maybe as a curiosity
-# # Uncomment when it's imported from cdr_unpk.ksy (for X6+ versions)
+# # Uncomment when imported from cdr_unpk.ksy (for X6+ versions)
 # params:
 #   - id: streams
 #     type: file_streams
@@ -129,7 +129,7 @@ types:
         size: len_body
         if: not is_body_external
     instances:
-      # # Uncomment when it's imported from cdr_unpk.ksy (for X6+ versions)
+      # # Uncomment when imported from cdr_unpk.ksy (for X6+ versions)
       # body_external:
       #   io: _root.streams.files[stream_number].body._io
       #   pos: ofs_body_external
