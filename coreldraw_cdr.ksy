@@ -694,10 +694,14 @@ types:
                   cy >= 0 ? cy : -cy
           pie:
             value: 'pie_raw != 0 ? true : false'
-          angle1_normalized:
+          angle1_rem:
             value: angle1.value % (2 * 3.14159265358979323846)
-          angle2_normalized:
+          angle1_normalized:
+            value: 'angle1_rem < 0 ? angle1_rem + (2 * 3.14159265358979323846) : angle1_rem'
+          angle2_rem:
             value: angle2.value % (2 * 3.14159265358979323846)
+          angle2_normalized:
+            value: 'angle2_rem < 0 ? angle2_rem + (2 * 3.14159265358979323846) : angle2_rem'
       line_and_curve:
         seq:
           - id: num_points_raw
