@@ -997,7 +997,7 @@ types:
             if: _root.version >= 1300
             size: 3
           - id: stops
-            type: stops
+            type: stop
             repeat: expr
             repeat-expr: num_stops
         instances:
@@ -1008,7 +1008,7 @@ types:
           num_stops:
             value: 'num_stops_raw & 0xffff'
         types:
-          stops:
+          stop:
             seq:
               - id: color
                 type: color
