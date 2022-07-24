@@ -720,9 +720,9 @@ types:
           num_points:
             value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
           num_points_max:
-            value: '(_io.size - _io.pos) / (_root.precision_16bit ? sizeof<s2> : sizeof<s4>)'
+            value: '(_io.size - _io.pos) / point_size'
           point_size:
-            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + 1'
+            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
         types:
           point:
             seq:
@@ -759,7 +759,7 @@ types:
           num_points_max:
             value: '(_io.size - _io.pos)'
           point_size:
-            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + 1'
+            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
         types:
           point:
             seq:
@@ -811,11 +811,11 @@ types:
             repeat-expr: num_points
         instances:
           num_points:
-            value: 'point_num <= point_num ? point_num : num_points_max'
+            value: 'point_num <= num_points_max ? point_num : num_points_max'
           num_points_max:
-            value: '(_io.size - _io.pos) / (_root.precision_16bit ? sizeof<s2> : sizeof<s4>)'
+            value: '(_io.size - _io.pos) / point_size'
           point_size:
-            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + 1'
+            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
         types:
           point:
             seq:
@@ -847,11 +847,11 @@ types:
             repeat-expr: num_points
         instances:
           num_points:
-            value: 'point_num <= point_num ? point_num : num_points_max'
+            value: 'point_num <= num_points_max ? point_num : num_points_max'
           num_points_max:
-            value: '(_io.size - _io.pos) / (_root.precision_16bit ? sizeof<s2> : sizeof<s4>)'
+            value: '(_io.size - _io.pos) / point_size'
           point_size:
-            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + 1'
+            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
         types:
           point:
             seq:
