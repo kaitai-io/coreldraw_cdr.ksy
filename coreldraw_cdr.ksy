@@ -723,13 +723,6 @@ types:
             value: '(_io.size - _io.pos) / point_size'
           point_size:
             value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
-        types:
-          point:
-            seq:
-              - id: first
-                type: coord
-              - id: second
-                type: coord
       path:
         seq:
           - id: unknown1
@@ -760,13 +753,6 @@ types:
             value: '(_io.size - _io.pos)'
           point_size:
             value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
-        types:
-          point:
-            seq:
-              - id: first
-                type: coord
-              - id: second
-                type: coord
       artistic_text:
         seq:
           - id: x
@@ -816,13 +802,6 @@ types:
             value: '(_io.size - _io.pos) / point_size'
           point_size:
             value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
-        types:
-          point:
-            seq:
-              - id: first
-                type: coord
-              - id: second
-                type: coord
       paragraph_text:
         seq:
           - id: unknown1
@@ -852,13 +831,6 @@ types:
             value: '(_io.size - _io.pos) / point_size'
           point_size:
             value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
-        types:
-          point:
-            seq:
-              - id: first
-                type: coord
-              - id: second
-                type: coord
     enums:
       arg_type:
         10: line_style
@@ -1458,6 +1430,12 @@ types:
             raw / 1000.0 :
             raw / 254000.0
     -webide-representation: "{value:dec}"
+  point:
+    seq:
+      - id: first
+        type: coord
+      - id: second
+        type: coord
   angle:
     seq:
       - id: raw
