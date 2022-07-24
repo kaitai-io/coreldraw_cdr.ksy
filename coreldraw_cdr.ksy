@@ -569,8 +569,7 @@ types:
       opacity:
         seq:
           - id: unknown
-            size:
-              '_root.version < 1300 ? 10 : 14'
+            size: '_root.version < 1300 ? 10 : 14'
           - id: opacity_raw
             type: u2
         instances:
@@ -746,9 +745,9 @@ types:
             value: >-
                   num_points_max < 16
                     ? 0
-                      : point_num_raw1 + point_num_raw2 > (num_points_max - 16) / point_size
-                        ? (num_points_max - 16) / point_size
-                          : point_num_raw1 + point_num_raw2
+                    : point_num_raw1 + point_num_raw2 > (num_points_max - 16) / point_size
+                      ? (num_points_max - 16) / point_size
+                      : point_num_raw1 + point_num_raw2
           num_points_max:
             value: '(_io.size - _io.pos)'
           point_size:
@@ -778,11 +777,9 @@ types:
             type: u4
           - id: unknown3
             size: >-
-                  _root.version < 400
-                    ? 8
-                      : _root.version >= 800 and _root.version < 900
-                        ? 12
-                          : 20
+                  _root.version < 400 ? 8
+                    : _root.version >= 800 and _root.version < 900 ? 12
+                      : 20
           - id: point_num
             type: u2
           - id: unknown4
@@ -888,7 +885,10 @@ types:
       - id: angle
         type: angle
       - id: unknown3
-        size: '_root.version >= 1300 ? 46 : _root.version >= 600 ? 52 : 0'
+        size: |
+          _root.version >= 1300 ? 46
+            : _root.version >= 600 ? 52
+              : 0
       - id: color
         type: color
       - id: unknown4
@@ -913,7 +913,6 @@ types:
         type: u2
         repeat: expr
         repeat-expr: num_dash
-        # size: num_dash
     types:
       seek:
         seq:
@@ -958,7 +957,10 @@ types:
           - id: type
             type: u1
           - id: unknown2
-            size: '_root.version >= 1300 ? 17 : _root.version >= 600 ? 19 : 11'
+            size: |
+              _root.version >= 1300 ? 17
+                : _root.version >= 600 ? 19
+                  : 11
           - id: edge_offset_16_bit
             if: '_root.version >= 1300 or _root.version < 600'
             type: s2
@@ -1008,7 +1010,10 @@ types:
           stops:
             seq:
               - id: unknown1
-                size: '_root.version >= 1400 ? 26 : _root.version >= 1300 ? 5 : 0'
+                size: |
+                  _root.version >= 1400 ? 26
+                    : _root.version >= 1300 ? 5
+                      : 0
               - id: offset_raw
                 type:
                   switch-on: _root.precision_16bit
@@ -1064,7 +1069,10 @@ types:
           - id: color1
             type: color
           - id: unknown4
-            size: '_root.version >= 1600 ? 31 : _root.version >= 1300 ? 10 : 0'
+            size: |
+              _root.version >= 1600 ? 31
+                : _root.version >= 1300 ? 10
+                  : 0
           - id: color2
             type: color
         instances:
@@ -1078,12 +1086,12 @@ types:
             value: >-
               ((flags & 0x04) != 0) and (_root.version < 900)
                 ? tmp_width / 100.0
-                  : tmp_width / (_root.version < 600 ? 1000.0 : 254000.0)
+                : tmp_width / (_root.version < 600 ? 1000.0 : 254000.0)
           pattern_height:
             value: >-
               ((flags & 0x04) != 0) and (_root.version < 900)
                 ? tmp_height / 100.0
-                  : tmp_height / (_root.version < 600 ? 1000.0 : 254000.0)
+                : tmp_height / (_root.version < 600 ? 1000.0 : 254000.0)
           is_relative:
             value: '((flags & 0x04) != 0) and (_root.version < 900) ? true : false'
       bitmap:
@@ -1184,12 +1192,12 @@ types:
             value: >-
               ((flags & 0x04) != 0) and (_root.version < 900)
                 ? tmp_width / 100.0
-                  : tmp_width / (_root.version < 600 ? 1000.0 : 254000.0)
+                : tmp_width / (_root.version < 600 ? 1000.0 : 254000.0)
           pattern_height:
             value: >-
               ((flags & 0x04) != 0) and (_root.version < 900)
                 ? tmp_height / 100.0
-                  : tmp_height / (_root.version < 600 ? 1000.0 : 254000.0)
+                : tmp_height / (_root.version < 600 ? 1000.0 : 254000.0)
           is_relative:
             value: '((flags & 0x04) != 0) and (_root.version < 900) ? true : false'
           pattern_id:
@@ -1426,9 +1434,9 @@ types:
     instances:
       value:
         value: >-
-          _root.precision_16bit ?
-            raw / 1000.0 :
-            raw / 254000.0
+          _root.precision_16bit
+            ? raw / 1000.0
+            : raw / 254000.0
     -webide-representation: "{value:dec}"
   point:
     seq:
@@ -1447,9 +1455,9 @@ types:
     instances:
       value:
         value: >-
-          _root.precision_16bit ?
-            3.14159265358979323846 * raw / 1800.0 :
-            3.14159265358979323846 * raw / 180000000.0
+          _root.precision_16bit
+            ? 3.14159265358979323846 * raw / 1800.0
+            : 3.14159265358979323846 * raw / 180000000.0
     -webide-representation: "{value:dec}"
   color:
     seq:
@@ -1476,13 +1484,13 @@ types:
         instances:
           color_model:
             value: >-
-                    (_root.version >= 1300 and color_model_raw == 0x01)
-                      ? 0x19
-                        : color_model_raw == 0x1e ? 0x19 : color_model_raw
+                    (_root.version >= 1300 and color_model_raw == 0x01) ? 0x19
+                      : color_model_raw == 0x1e ? 0x19
+                        : color_model_raw
           color_palette:
             value: >-
-                    color_model_raw == 0x1e
-                      ? 0x1e : color_palette_raw
+                    color_model_raw == 0x1e ? 0x1e
+                      : color_palette_raw
       color_middle:
         seq:
           - id: color_model
