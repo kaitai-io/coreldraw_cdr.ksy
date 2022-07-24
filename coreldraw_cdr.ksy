@@ -458,15 +458,15 @@ types:
                     type:
                       switch-on: _root.precision_16bit
                       cases:
-                        true: u2
-                        _: u4
+                        true: s2
+                        _: s4
                   - id: center_y_offset
                     if: _root.version >= 200
                     type:
                       switch-on: _root.precision_16bit
                       cases:
-                        true: u2
-                        _: u4
+                        true: s2
+                        _: s4
               pattern_data:
                 seq:
                   - id: pattern_width
@@ -961,12 +961,12 @@ types:
               _root.version >= 1300 ? 17
                 : _root.version >= 600 ? 19
                   : 11
-          - id: edge_offset_16_bit
-            if: '_root.version >= 1300 or _root.version < 600'
-            type: s2
-          - id: edge_offset_32_bit
-            if: '_root.version < 1300 and _root.version >= 600'
-            type: s4
+          - id: edge_offset
+            type:
+              switch-on: _root.version >= 600 and _root.version < 1300
+              cases:
+                true: s4
+                _: s2
           - id: angle
             type: angle
           - id: center_x_offset
@@ -1016,11 +1016,15 @@ types:
         types:
           stops:
             seq:
+              - id: color
+                type: color
               - id: unknown1
+                # FIXME: `26` is apparently wrong (too big) for a sample file with `version == 1400`
                 size: |
                   _root.version >= 1400 ? 26
                     : _root.version >= 1300 ? 5
                       : 0
+                doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1470-L1473
               - id: offset_raw
                 type:
                   switch-on: _root.precision_16bit
@@ -1084,16 +1088,16 @@ types:
             value: 'rcp_offset_raw / 100.0'
           pattern_width:
             value: >-
-              ((flags & 0x04) != 0) and (_root.version < 900)
+              is_relative
                 ? tmp_width / 100.0
                 : tmp_width / (_root.version < 600 ? 1000.0 : 254000.0)
           pattern_height:
             value: >-
-              ((flags & 0x04) != 0) and (_root.version < 900)
+              is_relative
                 ? tmp_height / 100.0
                 : tmp_height / (_root.version < 600 ? 1000.0 : 254000.0)
           is_relative:
-            value: '((flags & 0x04) != 0) and (_root.version < 900) ? true : false'
+            value: '((flags & 0x04) != 0) and (_root.version < 900)'
       bitmap:
         seq:
           - type: image_fill_data
