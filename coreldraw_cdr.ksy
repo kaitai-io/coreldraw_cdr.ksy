@@ -385,13 +385,13 @@ types:
 
       fill_style:
         seq:
-          - type: wal_do_fill
+          - type: waldo_fill
             if: _root.version < 400
           - id: fill_id
             if: _root.version >= 400
             type: u4
         types:
-          wal_do_fill:
+          waldo_fill:
             seq:
               - id: fill_type
                 type: u1
@@ -490,13 +490,13 @@ types:
                     value: rcp_offset_raw / 100.0
       line_style:
         seq:
-          - type: wal_do_outl
+          - type: waldo_outl
             if: _root.version < 400
           - id: outl_id
             if: _root.version >= 400
             type: u4
         types:
-          wal_do_outl:
+          waldo_outl:
             seq:
               - id: line_type_raw
                 type: u1
