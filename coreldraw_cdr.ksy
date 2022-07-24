@@ -1006,6 +1006,13 @@ types:
           - type: stops
             repeat: expr
             repeat-expr: num_stops
+        instances:
+          mode:
+            value: 'mode_raw & 0xff'
+          mid_point:
+            value: mid_point_raw / 100.0
+          num_stops:
+            value: 'num_stops_raw & 0xffff'
         types:
           stops:
             seq:
@@ -1026,13 +1033,6 @@ types:
             instances:
               offset:
                 value: '(offset_raw & 0xffff) / 100.0'
-        instances:
-          mode:
-            value: 'mode_raw & 0xff'
-          mid_point:
-            value: mid_point_raw / 100.0
-          num_stops:
-            value: 'num_stops_raw & 0xffff'
       pattern:
         seq:
           - id: unknown1
@@ -1109,6 +1109,9 @@ types:
             if: _root.version >= 600
           - type: image_fill_data_old
             if: _root.version < 600
+        instances:
+          fill_type_texture:
+            value: '_root.version < 600 ? 10 : _parent.fill_type'
         types:
           image_fill_data_old:
             seq:
@@ -1131,9 +1134,6 @@ types:
                 value: 0.0
               flags:
                 value: 0
-        instances:
-          fill_type_texture:
-            value: '_root.version < 600 ? 10 : _parent.fill_type'
       image_fill_data:
         seq:
           - type: skip_x3_optional
@@ -1285,6 +1285,22 @@ types:
       - id: scale_unit
         type: u2
         enum: unit
+    instances:
+      v:
+        value: _root.version
+      len_unknown0:
+        value: >-
+          v >= 1300 ?
+            12 :
+            v >= 900 ?
+              4 :
+              v < 700 and v >= 600 ?
+                0x1c :
+                0
+      width:
+        value: 'v < 400 ? (old_page_size.x1.value - old_page_size.x0.value) : page_size.width.value'
+      height:
+        value: 'v < 400 ? (old_page_size.y1.value - old_page_size.y0.value) : page_size.height.value'
     types:
       old_page_size:
         seq:
@@ -1304,22 +1320,6 @@ types:
             type: coord
           - id: height
             type: coord
-    instances:
-      v:
-        value: _root.version
-      len_unknown0:
-        value: >-
-          v >= 1300 ?
-            12 :
-            v >= 900 ?
-              4 :
-              v < 700 and v >= 600 ?
-                0x1c :
-                0
-      width:
-        value: 'v < 400 ? (old_page_size.x1.value - old_page_size.x0.value) : page_size.width.value'
-      height:
-        value: 'v < 400 ? (old_page_size.y1.value - old_page_size.y0.value) : page_size.height.value'
     enums:
       orientation:
         0: portrait
