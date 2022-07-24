@@ -385,7 +385,8 @@ types:
 
       fill_style:
         seq:
-          - type: waldo_fill
+          - id: waldo
+            type: waldo_fill
             if: _root.version < 400
           - id: fill_id
             if: _root.version >= 400
@@ -395,32 +396,20 @@ types:
             seq:
               - id: fill_type
                 type: u1
-              - type:
+              - id: style
+                type:
                   switch-on: fill_type
                   cases:
                     1: solid
-                    2: linear_gradient
-                    4: radial_gradient
+                    2: gradient # linear gradient
+                    4: gradient # radial gradient
                     7: pattern
                     10: full_color
-                    _: not_supported
             types:
               solid:
                 seq:
                   - id: color
                     type: color
-              linear_gradient:
-                seq:
-                  - type: gradient
-                instances:
-                  gradient_type:
-                    value: 1
-              radial_gradient:
-                seq:
-                  - type: gradient
-                instances:
-                  gradient_type:
-                    value: 2
               pattern:
                 seq:
                   - id: pattern_id
@@ -429,7 +418,8 @@ types:
                       cases:
                         true: u2
                         _: u4
-                  - type: pattern_data
+                  - id: data
+                    type: pattern_data
                   - id: color1
                     type: color
                   - id: color2
@@ -438,7 +428,8 @@ types:
                 seq:
                   - id: pattern_id
                     type: u2
-                  - type: pattern_data
+                  - id: data
+                    type: pattern_data
               gradient:
                 seq:
                   - id: angle
@@ -490,7 +481,8 @@ types:
                     value: rcp_offset_raw / 100.0
       line_style:
         seq:
-          - type: waldo_outl
+          - id: waldo
+            type: waldo_outl
             if: _root.version < 400
           - id: outl_id
             if: _root.version >= 400
@@ -862,8 +854,9 @@ types:
     seq:
       - id: line_id
         type: u4
-      - if: _root.version >= 1300
-        type: seek
+      - id: skips
+        if: _root.version >= 1300
+        type: skip
         repeat: until
         repeat-until: _.id == 1
       - id: line_type
@@ -914,7 +907,7 @@ types:
         repeat: expr
         repeat-expr: num_dash
     types:
-      seek:
+      skip:
         seq:
           - id: id
             type: u4
@@ -933,16 +926,16 @@ types:
         size: 8
       - id: fill_type
         type: u2
-      - type:
+      - id: style
+        type:
           switch-on: fill_type
           cases:
             1: solid
             2: gradient
             7: pattern
-            9: bitmap
-            10: full_color
+            9: image_fill_data # bitmap
+            10: image_fill_data # full color
             11: texture
-            _: not_supported
     types:
       solid:
         seq:
@@ -1003,7 +996,8 @@ types:
           - id: unknown5
             if: _root.version >= 1300
             size: 3
-          - type: stops
+          - id: stops
+            type: stops
             repeat: expr
             repeat-expr: num_stops
         instances:
@@ -1098,49 +1092,15 @@ types:
                 : tmp_height / (_root.version < 600 ? 1000.0 : 254000.0)
           is_relative:
             value: '((flags & 0x04) != 0) and (_root.version < 900)'
-      bitmap:
-        seq:
-          - type: image_fill_data
-        instances:
-          fill_type_bitmap:
-            value: '_root.version < 600 ? 10 : _parent.fill_type'
-      full_color:
-        seq:
-          - type: image_fill_data
       texture:
         seq:
-          - type: image_fill_data
+          - id: data
+            type: image_fill_data
             if: _root.version >= 600
-          - type: image_fill_data_old
-            if: _root.version < 600
-        instances:
-          fill_type_texture:
-            value: '_root.version < 600 ? 10 : _parent.fill_type'
-        types:
-          image_fill_data_old:
-            seq:
-              - id: unknown1
-                size: 2
-              - id: pattern_id
-                type: u4
-            instances:
-              pattern_width:
-                value: 1.0
-              pattern_height:
-                value: 1.0
-              is_relative:
-                value: true
-              tile_ooffset_x:
-                value: 0.0
-              tile_offset_y:
-                value: 0.0
-              rcp_offset:
-                value: 0.0
-              flags:
-                value: 0
       image_fill_data:
         seq:
-          - type: skip_x3_optional
+          - id: skip_x3
+            type: skip_x3_optional
             if: _root.version >= 1300
           - id: unknown1
             if: _root.version < 1300
@@ -1208,7 +1168,8 @@ types:
             value: '_root.version >= 600 ? pattern_id_raw2 : pattern_id_raw1'
       skip_x3_optional:
         seq:
-          - type: skip
+          - id: skips
+            type: skip
             repeat: until
             repeat-until: _.go_out
         types:
