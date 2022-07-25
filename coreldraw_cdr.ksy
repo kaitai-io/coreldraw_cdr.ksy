@@ -32,7 +32,7 @@ doc-ref:
 #     type: file_streams
 seq:
   - id: riff_chunk
-    type: riff_chunk
+    type: riff_chunk_type
 instances:
   version:
     value: 'riff_chunk.body.version'
@@ -44,7 +44,7 @@ instances:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2415-L2418
     value: _root.version < 600
 types:
-  riff_chunk:
+  riff_chunk_type:
     seq:
       - id: chunk_id
         contents: RIFF
@@ -55,7 +55,7 @@ types:
         size: len_body
       - id: pad_byte
         size: len_body % 2
-  chunks:
+  chunks_normal:
     # Defined this type to be consistent with the unconsistent `cmpr` chunk
     seq:
       - id: chunks
@@ -76,7 +76,7 @@ types:
       - id: c
         type: u1
       - id: chunks
-        type: chunks
+        type: chunks_normal
         size-eos: true
     instances:
       version:
@@ -252,7 +252,7 @@ types:
           cases:
             '"cmpr"': cmpr_special_chunk
             '"stlt"': not_supported
-            _: chunks
+            _: chunks_normal
         size-eos: true
   list_chunk_data_comp:
     params:
@@ -305,7 +305,7 @@ types:
     instances:
       chunk_type:
         value: chunk_type_int
-        enum: chunk_type
+        enum: chunk_types
       arg_offsets:
         doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2110-L2112
         pos: start_of_args
@@ -353,7 +353,7 @@ types:
           type:
             value: type_raw
             enum: arg_type
-          arg:
+          body:
             pos: offs
             type:
               switch-on: type
@@ -373,15 +373,15 @@ types:
             type:
               switch-on: _parent._parent.chunk_type
               cases:
-                'chunk_type::spline': spline
-                'chunk_type::rectangle': rectangle
-                'chunk_type::ellipse': ellipse
-                'chunk_type::line_and_curve': line_and_curve
-                'chunk_type::path': path
-                'chunk_type::artistic_text': artistic_text
-                'chunk_type::bitmap': bitmap
-                'chunk_type::paragraph_text': paragraph_text
-                'chunk_type::polygon_coords': polygon_coords
+                'chunk_types::spline': spline
+                'chunk_types::rectangle': rectangle
+                'chunk_types::ellipse': ellipse
+                'chunk_types::line_and_curve': line_and_curve
+                'chunk_types::path': path
+                'chunk_types::artistic_text': artistic_text
+                'chunk_types::bitmap': bitmap
+                'chunk_types::paragraph_text': paragraph_text
+                'chunk_types::polygon_coords': polygon_coords
 
       fill_style:
         seq:
@@ -562,11 +562,11 @@ types:
         seq:
           - id: unknown
             size: '_root.version < 1300 ? 10 : 14'
-          - id: opacity_raw
+          - id: value_raw
             type: u2
         instances:
-          opacity:
-            value: opacity_raw / 1000.0
+          value:
+            value: value_raw / 1000.0
       page_size:
         seq:
           - id: width
@@ -781,7 +781,7 @@ types:
         19130:
           id: page_size
           doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1817-L1818
-      chunk_type:
+      chunk_types:
         0x26: spline
         0x01: rectangle
         0x02: ellipse
@@ -1167,58 +1167,58 @@ types:
     seq:
       - id: unknown0
         size: len_unknown0
-      - id: old_page_size
+      - id: page_size_old
         if: v < 400
         type: old_page_size
       - id: page_size
         if: v >= 400
-        type: page_size
-      # FIXME: starting from here, the positions are completely off in newer CDR
-      # versions (so it's obviously reading garbage), there's probably some
-      # unknown data to skip
-      - id: unknown1
-        type: u2
-      - id: orientation
-        type: u2
-        enum: orientation
-      - id: unknown2
-        size: 12
-      - id: show_page_border
-        type: u2
-        enum: boolean
-      - id: layout
-        type: u2
-        enum: layout
-      - id: facing_pages
-        type: u2
-        enum: boolean
-      - id: start_on
-        type: u2
-        enum: start_on
-      - id: offset_x
-        type: coord
-      - id: offset_y
-        type: coord
-      - id: grid_freq_horz
-        type: f4
-      - id: grid_freq_vert
-        type: f4
-      - id: unit_horz
-        doc: Also the default drawing unit
-        type: u2
-        enum: unit
-      - id: unit_vert
-        type: u2
-        enum: unit
-      - id: unit_unknown
-        doc: No idea what is this used for, cannot make different from `unit_horz`
-        type: u2
-        enum: unit
-      - id: scale_factor
-        type: f4
-      - id: scale_unit
-        type: u2
-        enum: unit
+        type: new_page_size
+      # # FIXME: starting from here, the positions are completely off in newer CDR
+      # # versions (so it's obviously reading garbage), there's probably some
+      # # unknown data to skip
+      # - id: unknown1
+      #   type: u2
+      # - id: orientation
+      #   type: u2
+      #   enum: orientation
+      # - id: unknown2
+      #   size: 12
+      # - id: show_page_border
+      #   type: u2
+      #   enum: boolean
+      # - id: layout
+      #   type: u2
+      #   enum: layout
+      # - id: facing_pages
+      #   type: u2
+      #   enum: boolean
+      # - id: start_on
+      #   type: u2
+      #   enum: start_on
+      # - id: offset_x
+      #   type: coord
+      # - id: offset_y
+      #   type: coord
+      # - id: grid_freq_horz
+      #   type: f4
+      # - id: grid_freq_vert
+      #   type: f4
+      # - id: unit_horz
+      #   doc: Also the default drawing unit
+      #   type: u2
+      #   enum: unit
+      # - id: unit_vert
+      #   type: u2
+      #   enum: unit
+      # - id: unit_unknown
+      #   doc: No idea what is this used for, cannot make different from `unit_horz`
+      #   type: u2
+      #   enum: unit
+      # - id: scale_factor
+      #   type: f4
+      # - id: scale_unit
+      #   type: u2
+      #   enum: unit
     instances:
       v:
         value: _root.version
@@ -1232,9 +1232,9 @@ types:
                 0x1c :
                 0
       width:
-        value: 'v < 400 ? (old_page_size.x1.value - old_page_size.x0.value) : page_size.width.value'
+        value: 'v < 400 ? (page_size_old.x1.value - page_size_old.x0.value) : page_size.width.value'
       height:
-        value: 'v < 400 ? (old_page_size.y1.value - old_page_size.y0.value) : page_size.height.value'
+        value: 'v < 400 ? (page_size_old.y1.value - page_size_old.y0.value) : page_size.height.value'
     types:
       old_page_size:
         seq:
@@ -1248,43 +1248,43 @@ types:
             type: coord
           - id: y1
             type: coord
-      page_size:
+      new_page_size:
         seq:
           - id: width
             type: coord
           - id: height
             type: coord
-    enums:
-      orientation:
-        0: portrait
-        1: landscape
-      layout:
-        1: full_page
-        2: book
-        3: booklet
-        4: tent
-        5: side_folded_card
-        6: top_folded_card
-      boolean:
-        0: false
-        1: true
-      start_on:
-        0: right_side
-        1: left_side
-      unit:
-        1: inch
-        2: milimeter
-        3: picas_point
-        4: point
-        5: centimeter
-        6: pixel
-        7: feet
-        8: mile
-        9: meter
-        10: kilometer
-        12: ciceros_didot
-        13: didot
-        16: yard
+    # enums:
+    #   orientation:
+    #     0: portrait
+    #     1: landscape
+    #   layout:
+    #     1: full_page
+    #     2: book
+    #     3: booklet
+    #     4: tent
+    #     5: side_folded_card
+    #     6: top_folded_card
+    #   boolean:
+    #     0: false
+    #     1: true
+    #   start_on:
+    #     0: right_side
+    #     1: left_side
+    #   unit:
+    #     1: inch
+    #     2: milimeter
+    #     3: picas_point
+    #     4: point
+    #     5: centimeter
+    #     6: pixel
+    #     7: feet
+    #     8: mile
+    #     9: meter
+    #     10: kilometer
+    #     12: ciceros_didot
+    #     13: didot
+    #     16: yard
   bmp_chunk_data: {}
   bmpf_chunk_data: {}
   ppdt_chunk_data: {}
