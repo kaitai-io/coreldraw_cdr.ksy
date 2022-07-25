@@ -1010,12 +1010,22 @@ types:
         types:
           stop:
             seq:
+              # Byte size of one `stop` entry in each CDR version for which I
+              # had sample files with gradients:
+              #   CDR 1200: 16
+              #   CDR 1300: 24 (analysis: `16 + 8 = 16 + (5 + 3)`)
+              #   CDR 1400: 24
+              #   CDR 1500: 45 (analysis: `16 + 29 = 16 + (26 + 3)`)
+              #   CDR 2300 (according to 'vrsn' chunk): 45
               - id: color
                 type: color
               - id: unknown1
-                # FIXME: `26` is apparently wrong (too big) for a sample file with `version == 1400`
+                # Note: in the libcdr code (see `doc-ref`), `26` has been used
+                # already for `version >= 1400` (not `version >= 1500`), but
+                # this does not match sample files with `version == 1400` (see
+                # the above overview of `stop` sizes per CDR version)
                 size: |
-                  _root.version >= 1400 ? 26
+                  _root.version >= 1500 ? 26
                     : _root.version >= 1300 ? 5
                       : 0
                 doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1470-L1473
@@ -1426,17 +1436,17 @@ types:
     -webide-representation: "{value:dec}"
   color:
     seq:
-      - id: color_new_version
+      - id: color_since_v5
         if: _root.version >= 500
-        type: color_newest
-      - id: color_middle_version
+        type: color_new
+      - id: color_v4
         if: _root.version >= 400 and _root.version < 500
         type: color_middle
-      - id: color_old_verison
+      - id: color_before_v4
         if: _root.version < 400
         type: color_old
     types:
-      color_newest:
+      color_new:
         seq:
           - id: color_model_raw
             type: u2
@@ -1446,6 +1456,8 @@ types:
           - id: unknown
             if: 'color_model_raw != 0x1e'
             size: 4
+          - id: color_value
+            type: u4
         instances:
           color_model:
             value: >-
@@ -1470,6 +1482,13 @@ types:
             type: u2
           - id: unknown
             size: 2
+        instances:
+          color_value:
+            value: |
+              (k.as<u4> & 0xff) << 24 |
+              (m.as<u4> & 0xff) << 16 |
+              (m.as<u4> & 0xff) << 8 |
+              (c.as<u4> & 0xff)
       color_old:
         seq:
           - id: color_model
