@@ -1017,6 +1017,8 @@ types:
               #   CDR 1400: 24
               #   CDR 1500: 45 (analysis: `16 + 29 = 16 + (26 + 3)`)
               #   CDR 2300 (according to 'vrsn' chunk): 45
+              - size: 0
+                if: ofs_start < 0
               - id: color
                 type: color
               - id: unknown1
@@ -1038,7 +1040,18 @@ types:
               - id: unknown2
                 if: _root.version >= 1300
                 size: 3
+              - size: 0
+                valid:
+                  expr: |
+                    _io.pos - ofs_start == [16, 24, 24, 45][
+                      [
+                        [0, (_root.version - 1200) / 100].max,
+                        3
+                      ].min
+                    ]
             instances:
+              ofs_start:
+                value: _io.pos
               offset:
                 value: '(offset_raw & 0xffff) / 100.0'
       pattern:
@@ -1155,6 +1168,7 @@ types:
               cases:
                 true: u2
                 _: u4
+            valid: pattern_id_raw1
         instances:
           tile_offset_x:
             value: '_root.version < 900 ? (tile_offset_x_raw / 100.0) : 0.0'
