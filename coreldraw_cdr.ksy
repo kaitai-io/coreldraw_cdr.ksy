@@ -700,20 +700,7 @@ types:
           - id: unknown
             size: 2
           - id: points
-            type: point
-            repeat: expr
-            repeat-expr: num_points
-          - id: point_types
-            type: u1
-            repeat: expr
-            repeat-expr: num_points
-        instances:
-          num_points:
-            value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
-          num_points_max:
-            value: '(_io.size - _io.pos) / point_size'
-          point_size:
-            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
+            type: points_list(num_points_raw)
       path:
         seq:
           - id: unknown1
@@ -725,25 +712,7 @@ types:
           - id: unknown2
             size: 16
           - id: points
-            type: point
-            repeat: expr
-            repeat-expr: num_points
-          - id: point_types
-            type: u1
-            repeat: expr
-            repeat-expr: num_points
-        instances:
-          num_points:
-            value: >-
-                  num_points_max < 16
-                    ? 0
-                    : num_points_raw1 + num_points_raw2 > (num_points_max - 16) / point_size
-                      ? (num_points_max - 16) / point_size
-                      : num_points_raw1 + num_points_raw2
-          num_points_max:
-            value: '(_io.size - _io.pos)'
-          point_size:
-            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
+            type: points_list(num_points_raw1 + num_points_raw2)
       artistic_text:
         seq:
           - id: x
@@ -777,20 +746,7 @@ types:
           - id: unknown4
             size: 2
           - id: points
-            type: point
-            repeat: expr
-            repeat-expr: num_points
-          - id: point_types
-            type: u1
-            repeat: expr
-            repeat-expr: num_points
-        instances:
-          num_points:
-            value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
-          num_points_max:
-            value: '(_io.size - _io.pos) / point_size'
-          point_size:
-            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
+            type: points_list(num_points_raw)
       paragraph_text:
         seq:
           - id: unknown1
@@ -806,20 +762,7 @@ types:
           - id: unknown
             size: 2
           - id: points
-            type: point
-            repeat: expr
-            repeat-expr: num_points
-          - id: point_types
-            type: u1
-            repeat: expr
-            repeat-expr: num_points
-        instances:
-          num_points:
-            value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
-          num_points_max:
-            value: '(_io.size - _io.pos) / point_size'
-          point_size:
-            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
+            type: points_list(num_points_raw)
     enums:
       arg_type:
         10: line_style
@@ -1427,12 +1370,33 @@ types:
             ? raw / 1000.0
             : raw / 254000.0
     -webide-representation: "{value:dec}"
-  point:
+  points_list:
+    params:
+      - id: num_points_raw
+        type: s4
     seq:
-      - id: first
-        type: coord
-      - id: second
-        type: coord
+      - id: points
+        type: point
+        repeat: expr
+        repeat-expr: num_points
+      - id: point_types
+        type: u1
+        repeat: expr
+        repeat-expr: num_points
+    instances:
+      num_points:
+        value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
+      num_points_max:
+        value: '(_io.size - _io.pos) / point_size'
+      point_size:
+        value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
+    types:
+      point:
+        seq:
+          - id: first
+            type: coord
+          - id: second
+            type: coord
   angle:
     seq:
       - id: raw
