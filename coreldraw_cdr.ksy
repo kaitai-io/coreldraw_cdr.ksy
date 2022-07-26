@@ -1375,28 +1375,57 @@ types:
       - id: num_points_raw
         type: s4
     seq:
+      - size: 0
+        if: ofs_points < 0
       - id: points
-        type: point
-        repeat: expr
-        repeat-expr: num_points
-      - id: point_types
-        type: u1
+        type: point(point_types[_index])
         repeat: expr
         repeat-expr: num_points
     instances:
+      ofs_points:
+        value: _io.pos
+      point_types:
+        pos: ofs_points + point_size * num_points
+        type: u1
+        repeat: expr
+        repeat-expr: num_points
       num_points:
         value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
       num_points_max:
-        value: '(_io.size - _io.pos) / point_size'
+        value: '(_io.size - _io.pos) / (point_size + sizeof<u1>)'
       point_size:
-        value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + sizeof<u1>'
+        value: '(_root.precision_16bit ? sizeof<s2> : sizeof<s4>) * 2'
     types:
       point:
+        params:
+          - id: type
+            type: u1
         seq:
           - id: first
             type: coord
           - id: second
             type: coord
+        instances:
+          is_closing_path:
+            value: (type & 0b0000_1000) != 0
+          continuation:
+            value: (type & 0b0011_0000) >> 4
+            enum: continuations
+          operation:
+            value: (type & 0b1100_0000) >> 6
+            enum: operations
+        enums:
+          operations:
+            0b00: move_to
+            0b01: line_to
+            0b10:
+              id: cubic_bezier_to
+              doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CommonParser.cpp#L116-L127
+            0b11: add_to_tmp_points
+          continuations:
+            0b00: angle
+            0b01: smooth
+            0b10: symmetrical
   angle:
     seq:
       - id: raw
