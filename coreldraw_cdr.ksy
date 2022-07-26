@@ -718,9 +718,9 @@ types:
         seq:
           - id: unknown1
             size: 4
-          - id: point_num_raw1
+          - id: num_points_raw1
             type: u2
-          - id: point_num_raw2
+          - id: num_points_raw2
             type: u2
           - id: unknown2
             size: 16
@@ -737,9 +737,9 @@ types:
             value: >-
                   num_points_max < 16
                     ? 0
-                    : point_num_raw1 + point_num_raw2 > (num_points_max - 16) / point_size
+                    : num_points_raw1 + num_points_raw2 > (num_points_max - 16) / point_size
                       ? (num_points_max - 16) / point_size
-                      : point_num_raw1 + point_num_raw2
+                      : num_points_raw1 + num_points_raw2
           num_points_max:
             value: '(_io.size - _io.pos)'
           point_size:
@@ -772,7 +772,7 @@ types:
                   _root.version < 400 ? 8
                     : _root.version >= 800 and _root.version < 900 ? 12
                       : 20
-          - id: point_num
+          - id: num_points_raw
             type: u2
           - id: unknown4
             size: 2
@@ -786,7 +786,7 @@ types:
             repeat-expr: num_points
         instances:
           num_points:
-            value: 'point_num <= num_points_max ? point_num : num_points_max'
+            value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
           num_points_max:
             value: '(_io.size - _io.pos) / point_size'
           point_size:
@@ -801,7 +801,7 @@ types:
             type: coord
       polygon_coords:
         seq:
-          - id: point_num
+          - id: num_points_raw
             type: u2
           - id: unknown
             size: 2
@@ -815,7 +815,7 @@ types:
             repeat-expr: num_points
         instances:
           num_points:
-            value: 'point_num <= num_points_max ? point_num : num_points_max'
+            value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
           num_points_max:
             value: '(_io.size - _io.pos) / point_size'
           point_size:
