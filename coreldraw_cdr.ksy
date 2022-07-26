@@ -1401,9 +1401,9 @@ types:
           - id: type
             type: u1
         seq:
-          - id: first
+          - id: x
             type: coord
-          - id: second
+          - id: y
             type: coord
         instances:
           is_closing_path:
