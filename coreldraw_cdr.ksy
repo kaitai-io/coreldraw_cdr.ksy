@@ -131,13 +131,13 @@ types:
     instances:
       # # Uncomment when imported from cdr_unpk.ksy (for X6+ versions)
       # body_external:
-      #   io: _root.streams.files[stream_number].body._io
-      #   pos: ofs_body_external
+      #   io: _root.streams.files[stream_number.as<s4>].body._io
+      #   pos: ofs_body_external.as<u4>
       #   size: len_body
       #   type: chunk_body
       #   if: is_body_external
       len_body:
-        value: 'has_redir_data ? len_body_redir : _io.size'
+        value: 'has_redir_data ? len_body_redir.as<u4> : _io.size'
       has_redir_data:
         value: '_root.version >= 1600 and _io.size == 0x10'
       is_body_external:
@@ -328,7 +328,7 @@ types:
         repeat: expr
         repeat-expr: num_of_args
       args:
-        type: arg(arg_offsets[_index], arg_types[(num_of_args - 1) - _index])
+        type: arg(arg_offsets[_index], arg_types[(num_of_args.as<s4> - 1) - _index])
         repeat: expr
         # repeat-expr: num_of_args - 1
         repeat-expr: num_of_args
@@ -1149,7 +1149,7 @@ types:
                 type: u4
               - id: unknown1
                 if: lookahead == 0x640
-                size: length
+                size: length.as<u4>
               - id: unknown2
                 if: lookahead == 0x514
                 size: 4
