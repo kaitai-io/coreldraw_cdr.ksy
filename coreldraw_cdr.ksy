@@ -1495,7 +1495,7 @@ types:
           color_value:
             value: |
               (k.as<u4> & 0xff) << 24 |
-              (m.as<u4> & 0xff) << 16 |
+              (y.as<u4> & 0xff) << 16 |
               (m.as<u4> & 0xff) << 8 |
               (c.as<u4> & 0xff)
       color_old:
