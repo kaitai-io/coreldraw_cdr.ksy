@@ -502,7 +502,7 @@ types:
                 type: color
               - id: unknown1
                 size: 7
-              - id: num_dash
+              - id: num_dashes
                 type: u1
               - size: 0
                 if: ofs_dashes < 0
@@ -523,7 +523,7 @@ types:
                 pos: ofs_dashes
                 type: u1
                 repeat: expr
-                repeat-expr: num_dash
+                repeat-expr: num_dashes
       style:
         seq:
           - id: style_id
@@ -829,7 +829,7 @@ types:
         type: color
       - id: unknown4
         size: '_root.version < 600 ? 10 : 16'
-      - id: num_dash_raw
+      - id: num_dashes_raw
         type: u2
       - size: 0
         if: ofs_dashes < 0
@@ -840,15 +840,15 @@ types:
       - id: end_marker_id
         type: u4
     instances:
-      num_dash:
-        value: 'num_dash_raw > (_io.size - _io.pos) / 2 ? (_io.size - _io.pos) / 2 : num_dash_raw'
+      num_dashes:
+        value: 'num_dashes_raw > (_io.size - _io.pos) / 2 ? (_io.size - _io.pos) / 2 : num_dashes_raw'
       ofs_dashes:
         value: _io.pos
       dashes:
         pos: ofs_dashes
         type: u2
         repeat: expr
-        repeat-expr: num_dash
+        repeat-expr: num_dashes
     types:
       skip:
         seq:
