@@ -1123,16 +1123,16 @@ types:
             value: 'rcp_offset_raw / 100.0'
           pattern_width:
             value: >-
-              ((flags & 0x04) != 0) and (_root.version < 900)
+              is_relative
                 ? tmp_width / 100.0
                 : tmp_width / (_root.version < 600 ? 1000.0 : 254000.0)
           pattern_height:
             value: >-
-              ((flags & 0x04) != 0) and (_root.version < 900)
+              is_relative
                 ? tmp_height / 100.0
                 : tmp_height / (_root.version < 600 ? 1000.0 : 254000.0)
           is_relative:
-            value: '((flags & 0x04) != 0) and (_root.version < 900) ? true : false'
+            value: '((flags & 0x04) != 0) and (_root.version < 900)'
           pattern_id:
             value: '_root.version >= 600 ? pattern_id_raw2 : pattern_id_raw1'
       skip_x3_optional:
