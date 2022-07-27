@@ -571,7 +571,7 @@ types:
         seq:
           - id: width
             type: coord
-          - id: heigth
+          - id: height
             type: coord
 
       spline: {}
