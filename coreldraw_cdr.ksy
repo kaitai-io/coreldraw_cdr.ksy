@@ -194,8 +194,8 @@ types:
             '"DISP"': disp_chunk_data
             '"loda"': loda_chunk_data
             '"trfd"': not_supported
-            '"outl"': not_supported
-            '"fild"': not_supported
+            '"outl"': outl_chunk_data
+            '"fild"': fild_chunk_data
 
             '"vrsn"': vrsn_chunk_data
             '"mcfg"': mcfg_chunk_data
@@ -383,12 +383,196 @@ types:
                 'chunk_type::paragraph_text': paragraph_text
                 'chunk_type::polygon_coords': polygon_coords
 
-      fill_style: {}
-      line_style: {}
-      style: {}
-      polygon_transform: {}
-      opacity: {}
-      page_size: {}
+      fill_style:
+        seq:
+          - id: waldo
+            type: waldo_fill
+            if: _root.version < 400
+          - id: fill_id
+            if: _root.version >= 400
+            type: u4
+        types:
+          waldo_fill:
+            seq:
+              - id: fill_type
+                type: u1
+              - id: style
+                type:
+                  switch-on: fill_type
+                  cases:
+                    1: solid
+                    2: gradient # linear gradient
+                    4: gradient # radial gradient
+                    7: pattern
+                    10: full_color
+            types:
+              solid:
+                seq:
+                  - id: color
+                    type: color
+              pattern:
+                seq:
+                  - id: pattern_id
+                    type:
+                      switch-on: _root.version < 300
+                      cases:
+                        true: u2
+                        _: u4
+                  - id: data
+                    type: pattern_data
+                  - id: color1
+                    type: color
+                  - id: color2
+                    type: color
+              full_color:
+                seq:
+                  - id: pattern_id
+                    type: u2
+                  - id: data
+                    type: pattern_data
+              gradient:
+                seq:
+                  - id: angle
+                    type: angle
+                  - id: color1
+                    type: color
+                  - id: color2
+                    type: color
+                  - id: unknown
+                    if: _root.version >= 200
+                    size: 7
+                  - id: edge_offset
+                    if: _root.version >= 200
+                    type: s2
+                  - id: center_x_offset
+                    if: _root.version >= 200
+                    type:
+                      switch-on: _root.precision_16bit
+                      cases:
+                        true: s2
+                        _: s4
+                  - id: center_y_offset
+                    if: _root.version >= 200
+                    type:
+                      switch-on: _root.precision_16bit
+                      cases:
+                        true: s2
+                        _: s4
+              pattern_data:
+                seq:
+                  - id: pattern_width
+                    type: coord
+                  - id: pattern_height
+                    type: coord
+                  - id: tile_offset_x_raw
+                    type: u2
+                  - id: tile_offset_y_raw
+                    type: u2
+                  - id: rcp_offset_raw
+                    type: u2
+                  - id: unknown
+                    size: 1
+                instances:
+                  tile_offset_x:
+                    value: tile_offset_x_raw / 100.0
+                  tile_offset_y:
+                    value: tile_offset_y_raw / 100.0
+                  rcp_offset:
+                    value: rcp_offset_raw / 100.0
+      line_style:
+        seq:
+          - id: waldo
+            type: waldo_outl
+            if: _root.version < 400
+          - id: outl_id
+            if: _root.version >= 400
+            type: u4
+        types:
+          waldo_outl:
+            seq:
+              - id: line_type_raw
+                type: u1
+              - id: line_width
+                type: coord
+              - id: stretch_raw
+                type: u2
+              - id: angle
+                type: angle
+              - id: color
+                type: color
+              - id: unknown1
+                size: 7
+              - id: num_dashes
+                type: u1
+              - size: 0
+                if: ofs_dashes < 0
+              - id: unknown2
+                size: 10
+              - id: join_type
+                type: u2
+              - id: caps_type
+                type: u2
+              - id: start_marker_id
+                type: u4
+              - id: end_marker_id
+                type: u4
+            instances:
+              ofs_dashes:
+                value: _io.pos
+              dashes:
+                pos: ofs_dashes
+                type: u1
+                repeat: expr
+                repeat-expr: num_dashes
+      style:
+        seq:
+          - id: style_id
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: u2
+                _: u4
+      polygon_transform:
+        seq:
+          - id: unknown1
+            if: _root.version < 1300
+            size: 4
+          - id: num_angles
+            type: u4
+          - id: next_point1
+            type: u4
+          - id: next_point2
+            if: next_point1 <= 1
+            type: u4
+          - id: unknown2
+            if: next_point1 > 1
+            size: 4
+          - id: unknown3
+            if: _root.version >= 1300
+            size: 4
+          - id: rx
+            type: f8
+          - id: ry
+            type: f8
+          - id: cx
+            type: coord
+          - id: cy
+            type: coord
+      opacity:
+        seq:
+          - id: unknown
+            size: '_root.version < 1300 ? 10 : 14'
+          - id: opacity_raw
+            type: u2
+        instances:
+          opacity:
+            value: opacity_raw / 1000.0
+      page_size:
+        seq:
+          - id: width
+            type: coord
+          - id: height
+            type: coord
 
       spline: {}
       rectangle:
@@ -471,7 +655,44 @@ types:
             instances:
               value:
                 value: '_root.version < 1500 ? raw.as<coord>.value : raw.as<f8> / 254000.0'
-      ellipse: {}
+      ellipse:
+        doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L1278
+        seq:
+          - id: x
+            type: coord
+          - id: y
+            type: coord
+          - id: angle1
+            type: angle
+          - id: angle2
+            type: angle
+          - id: pie_raw
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: u2
+                _: u4
+        instances:
+          cx:
+            value: x.value / 2.0
+          cy:
+            value: y.value / 2.0
+          rx:
+            value: >-
+                  cx >= 0 ? cx : -cx
+          ry:
+            value: >-
+                  cy >= 0 ? cy : -cy
+          pie:
+            value: 'pie_raw != 0 ? true : false'
+          angle1_rem:
+            value: angle1.value % (2 * 3.14159265358979323846)
+          angle1_normalized:
+            value: 'angle1_rem < 0 ? angle1_rem + (2 * 3.14159265358979323846) : angle1_rem'
+          angle2_rem:
+            value: angle2.value % (2 * 3.14159265358979323846)
+          angle2_normalized:
+            value: 'angle2_rem < 0 ? angle2_rem + (2 * 3.14159265358979323846) : angle2_rem'
       line_and_curve:
         seq:
           - id: num_points_raw
@@ -479,32 +700,69 @@ types:
           - id: unknown
             size: 2
           - id: points
-            type: point
-            repeat: expr
-            repeat-expr: num_points
-          - id: point_types
-            type: u1
-            repeat: expr
-            repeat-expr: num_points
-        instances:
-          num_points:
-            value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
-          num_points_max:
-            value: '(_io.size - _io.pos) / (_root.precision_16bit ? sizeof<s2> : sizeof<s4>)'
-          point_size:
-            value: '2 * (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) + 1'
-        types:
-          point:
-            seq:
-              - id: first
-                type: coord
-              - id: second
-                type: coord
-      path: {}
-      artistic_text: {}
-      bitmap: {}
-      paragraph_text: {}
-      polygon_coords: {}
+            type: points_list(num_points_raw)
+      path:
+        seq:
+          - id: unknown1
+            size: 4
+          - id: num_points_raw1
+            type: u2
+          - id: num_points_raw2
+            type: u2
+          - id: unknown2
+            size: 16
+          - id: points
+            type: points_list(num_points_raw1 + num_points_raw2)
+      artistic_text:
+        seq:
+          - id: x
+            type: coord
+          - id: y
+            type: coord
+      bitmap:
+        doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L1468
+        seq:
+          - id: x1
+            type: coord
+          - id: y1
+            type: coord
+          - id: x2
+            type: coord
+          - id: y2
+            type: coord
+          - id: unknown1
+            size: 16
+          - id: unknown2
+            size: 16
+          - id: image_id
+            type: u4
+          - id: unknown3
+            size: >-
+                  _root.version < 400 ? 8
+                    : _root.version >= 800 and _root.version < 900 ? 12
+                      : 20
+          - id: num_points_raw
+            type: u2
+          - id: unknown4
+            size: 2
+          - id: points
+            type: points_list(num_points_raw)
+      paragraph_text:
+        seq:
+          - id: unknown1
+            size: 4
+          - id: width
+            type: coord
+          - id: height
+            type: coord
+      polygon_coords:
+        seq:
+          - id: num_points_raw
+            type: u2
+          - id: unknown
+            size: 2
+          - id: points
+            type: points_list(num_points_raw)
     enums:
       arg_type:
         10: line_style
@@ -534,10 +792,373 @@ types:
         0x06: paragraph_text
         0x14: polygon_coords
 
-
   trfd_chunk_data: {}
-  outl_chunk_data: {}
-  fild_chunk_data: {}
+  outl_chunk_data:
+    seq:
+      - id: line_id
+        type: u4
+      - id: skips
+        if: _root.version >= 1300
+        type: skip
+        repeat: until
+        repeat-until: _.id == 1
+      - id: line_type
+        type: u2
+      - id: caps_type
+        type: u2
+      - id: join_type
+        type: u2
+      - id: unknown1
+        if: _root.version < 1300 and _root.version >= 600
+        size: 2
+      - id: line_width
+        type: coord
+      - id: stretch_raw
+        type: u2
+      - id: unknown2
+        if: _root.version >= 600
+        size: 2
+      - id: angle
+        type: angle
+      - id: unknown3
+        size: |
+          _root.version >= 1300 ? 46
+            : _root.version >= 600 ? 52
+              : 0
+      - id: color
+        type: color
+      - id: unknown4
+        size: '_root.version < 600 ? 10 : 16'
+      - id: num_dashes_raw
+        type: u2
+      - size: 0
+        if: ofs_dashes < 0
+      - id: unknown5
+        size: '_root.version < 600 ? 20 : 22'
+      - id: start_marker_id
+        type: u4
+      - id: end_marker_id
+        type: u4
+    instances:
+      ofs_dashes:
+        value: _io.pos
+      dashes:
+        pos: ofs_dashes
+        type: u2
+        repeat: expr
+        repeat-expr: num_dashes
+      num_dashes:
+        value: 'num_dashes_raw <= num_dashes_max ? num_dashes_raw : num_dashes_max'
+      num_dashes_max:
+        value: (_io.size - _io.pos) / sizeof<u2>
+    types:
+      skip:
+        seq:
+          - id: id
+            type: u4
+          - id: lngth
+            type: u4
+          - id: unknown
+            if: id != 1
+            size: lngth
+
+  fild_chunk_data:
+    seq:
+      - id: fill_id
+        type: u4
+      - id: unknown
+        if: _root.version >= 1300
+        size: 8
+      - id: fill_type
+        type: u2
+      - id: style
+        type:
+          switch-on: fill_type
+          cases:
+            1: solid
+            2: gradient
+            7: pattern
+            9: image_fill_data # bitmap
+            10: image_fill_data # full color
+            11: texture
+    types:
+      solid:
+        seq:
+          - id: unknown
+            size: '_root.version >= 1300 ? 13 : 2'
+          - id: color1
+            type: color
+      gradient:
+        seq:
+          - id: unknown1
+            size: '_root.version >= 1300 ? 8 : 2'
+          - id: type
+            type: u1
+          - id: unknown2
+            size: |
+              _root.version >= 1300 ? 17
+                : _root.version >= 600 ? 19
+                  : 11
+          - id: edge_offset
+            type:
+              switch-on: _root.version >= 600 and _root.version < 1300
+              cases:
+                true: s4
+                _: s2
+          - id: angle
+            type: angle
+          - id: center_x_offset
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: s2
+                _: s4
+          - id: center_y_offset
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: s2
+                _: s4
+          - id: unknown3
+            if: _root.version >= 600
+            size: 2
+          - id: mode_raw
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: u2
+                _: u4
+          - id: mid_point_raw
+            type: u1
+          - id: unknown4
+            size: 1
+          - id: num_stops_raw
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: u2
+                _: u4
+          - id: unknown5
+            if: _root.version >= 1300
+            size: 3
+          - id: stops
+            type: stop
+            repeat: expr
+            repeat-expr: num_stops
+        instances:
+          mode:
+            value: 'mode_raw & 0xff'
+          mid_point:
+            value: mid_point_raw / 100.0
+          num_stops:
+            value: 'num_stops_raw & 0xffff'
+        types:
+          stop:
+            seq:
+              # Byte size of one `stop` entry in each CDR version for which I
+              # had sample files with gradients:
+              #   CDR 1200: 16
+              #   CDR 1300: 24 (analysis: `16 + 8 = 16 + (5 + 3)`)
+              #   CDR 1400: 24
+              #   CDR 1500: 45 (analysis: `16 + 29 = 16 + (26 + 3)`)
+              #   CDR 2300 (according to 'vrsn' chunk): 45
+              - size: 0
+                if: ofs_start < 0
+              - id: color
+                type: color
+              - id: unknown1
+                # Note: in the libcdr code (see `doc-ref`), `26` has been used
+                # already for `version >= 1400` (not `version >= 1500`), but
+                # this does not match sample files with `version == 1400` (see
+                # the above overview of `stop` sizes per CDR version)
+                size: |
+                  _root.version >= 1500 ? 26
+                    : _root.version >= 1300 ? 5
+                      : 0
+                doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1470-L1473
+              - id: offset_raw
+                type:
+                  switch-on: _root.precision_16bit
+                  cases:
+                    true: u2
+                    _: u4
+              - id: unknown2
+                if: _root.version >= 1300
+                size: 3
+              - size: 0
+                valid:
+                  expr: |
+                    _io.pos - ofs_start == [16, 24, 24, 45][
+                      [
+                        [0, (_root.version - 1200) / 100].max,
+                        3
+                      ].min
+                    ]
+            instances:
+              ofs_start:
+                value: _io.pos
+              offset:
+                value: '(offset_raw & 0xffff) / 100.0'
+      pattern:
+        seq:
+          - id: unknown1
+            size: '_root.version >= 1300 ? 8 : 2'
+          - id: pattern_id
+            type: u4
+          - id: tmp_width
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: s2
+                _: s4
+          - id: tmp_height
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: s2
+                _: s4
+          - id: tile_offset_x_raw
+            if: _root.version < 900
+            type: u2
+          - id: tile_offset_y_raw
+            if: _root.version < 900
+            type: u2
+          - id: unknown2
+            if: _root.version >= 900
+            size: 4
+          - id: rcp_offset_raw
+            type: u2
+          - id: flags
+            type: u1
+          - id: unknown3
+            size: '_root.version >= 1300 ? 6 : 1'
+          - id: color1
+            type: color
+          - id: unknown4
+            size: |
+              _root.version >= 1600 ? 31
+                : _root.version >= 1300 ? 10
+                  : 0
+          - id: color2
+            type: color
+        instances:
+          tile_offset_x:
+            value: '_root.version < 900 ? (tile_offset_x_raw / 100.0) : 0.0'
+          tile_offset_y:
+            value: '_root.version < 900 ? (tile_offset_y_raw / 100.0) : 0.0'
+          rcp_offset:
+            value: 'rcp_offset_raw / 100.0'
+          pattern_width:
+            value: >-
+              is_relative
+                ? tmp_width / 100.0
+                : tmp_width / (_root.version < 600 ? 1000.0 : 254000.0)
+          pattern_height:
+            value: >-
+              is_relative
+                ? tmp_height / 100.0
+                : tmp_height / (_root.version < 600 ? 1000.0 : 254000.0)
+          is_relative:
+            value: '((flags & 0x04) != 0) and (_root.version < 900)'
+      texture:
+        seq:
+          - id: data
+            type: image_fill_data
+            if: _root.version >= 600
+      image_fill_data:
+        seq:
+          - id: skip_x3
+            type: skip_x3_optional
+            if: _root.version >= 1300
+          - id: unknown1
+            if: _root.version < 1300
+            size: 2
+          - id: pattern_id_raw1
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: u2
+                _: u4
+          - id: tmp_width
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: u2
+                _: u4
+          - id: tmp_height
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: u2
+                _: u4
+          - id: tile_offset_x_raw
+            if: _root.version < 900
+            type: u2
+          - id: tile_offset_y_raw
+            if: _root.version < 900
+            type: u2
+          - id: unknown2
+            if: _root.version >= 900
+            size: 4
+          - id: rcp_offset_raw
+            type: u2
+          - id: flags
+            type: u1
+          - id: unknown3
+            size: '_root.version >= 1300 ? 17 : 21'
+          - id: pattern_id_raw2
+            if: _root.version >= 600
+            type:
+              switch-on: _root.precision_16bit
+              cases:
+                true: u2
+                _: u4
+            valid: pattern_id_raw1
+        instances:
+          tile_offset_x:
+            value: '_root.version < 900 ? (tile_offset_x_raw / 100.0) : 0.0'
+          tile_offset_y:
+            value: '_root.version < 900 ? (tile_offset_y_raw / 100.0) : 0.0'
+          rcp_offset:
+            value: 'rcp_offset_raw / 100.0'
+          pattern_width:
+            value: >-
+              is_relative
+                ? tmp_width / 100.0
+                : tmp_width / (_root.version < 600 ? 1000.0 : 254000.0)
+          pattern_height:
+            value: >-
+              is_relative
+                ? tmp_height / 100.0
+                : tmp_height / (_root.version < 600 ? 1000.0 : 254000.0)
+          is_relative:
+            value: '((flags & 0x04) != 0) and (_root.version < 900)'
+          pattern_id:
+            value: '_root.version >= 600 ? pattern_id_raw2 : pattern_id_raw1'
+      skip_x3_optional:
+        seq:
+          - id: skips
+            type: skip
+            repeat: until
+            repeat-until: _.go_out
+        types:
+          skip:
+            seq:
+              - id: length
+                if: lookahead == 0x640
+                type: u4
+              - id: unknown1
+                if: lookahead == 0x640
+                size: length
+              - id: unknown2
+                if: lookahead == 0x514
+                size: 4
+            instances:
+              go_out:
+                value: 'lookahead != 0x640 and lookahead != 0x514'
+              lookahead:
+                pos: _io.pos
+                type: u4
   arrw_chunk_data: {}
   flgs_chunk_data: {}
   mcfg_chunk_data:
@@ -598,6 +1219,22 @@ types:
       - id: scale_unit
         type: u2
         enum: unit
+    instances:
+      v:
+        value: _root.version
+      len_unknown0:
+        value: >-
+          v >= 1300 ?
+            12 :
+            v >= 900 ?
+              4 :
+              v < 700 and v >= 600 ?
+                0x1c :
+                0
+      width:
+        value: 'v < 400 ? (old_page_size.x1.value - old_page_size.x0.value) : page_size.width.value'
+      height:
+        value: 'v < 400 ? (old_page_size.y1.value - old_page_size.y0.value) : page_size.height.value'
     types:
       old_page_size:
         seq:
@@ -617,22 +1254,6 @@ types:
             type: coord
           - id: height
             type: coord
-    instances:
-      v:
-        value: _root.version
-      len_unknown0:
-        value: >-
-          v >= 1300 ?
-            12 :
-            v >= 900 ?
-              4 :
-              v < 700 and v >= 600 ?
-                0x1c :
-                0
-      width:
-        value: 'v < 400 ? (old_page_size.x1.value - old_page_size.x0.value) : page_size.width.value'
-      height:
-        value: 'v < 400 ? (old_page_size.y1.value - old_page_size.y0.value) : page_size.height.value'
     enums:
       orientation:
         0: portrait
@@ -747,8 +1368,140 @@ types:
     instances:
       value:
         value: >-
-          _root.precision_16bit ?
-            raw / 1000.0 :
-            raw / 254000.0
+          _root.precision_16bit
+            ? raw / 1000.0
+            : raw / 254000.0
     -webide-representation: "{value:dec}"
+  points_list:
+    params:
+      - id: num_points_raw
+        type: s4
+    seq:
+      - size: 0
+        if: ofs_points < 0
+      - id: points
+        type: point(point_types[_index])
+        repeat: expr
+        repeat-expr: num_points
+    instances:
+      ofs_points:
+        value: _io.pos
+      point_types:
+        pos: ofs_points + point_size * num_points
+        type: u1
+        repeat: expr
+        repeat-expr: num_points
+      num_points:
+        value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
+      num_points_max:
+        value: '(_io.size - _io.pos) / (point_size + sizeof<u1>)'
+      point_size:
+        value: '(_root.precision_16bit ? sizeof<s2> : sizeof<s4>) * 2'
+    types:
+      point:
+        params:
+          - id: type
+            type: u1
+        seq:
+          - id: x
+            type: coord
+          - id: y
+            type: coord
+        instances:
+          is_closing_path:
+            value: (type & 0b0000_1000) != 0
+          continuation:
+            value: (type & 0b0011_0000) >> 4
+            enum: continuations
+          operation:
+            value: (type & 0b1100_0000) >> 6
+            enum: operations
+        enums:
+          operations:
+            0b00: move_to
+            0b01: line_to
+            0b10:
+              id: cubic_bezier_to
+              doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CommonParser.cpp#L116-L127
+            0b11: add_to_tmp_points
+          continuations:
+            0b00: angle
+            0b01: smooth
+            0b10: symmetrical
+  angle:
+    seq:
+      - id: raw
+        type:
+          switch-on: _root.precision_16bit
+          cases:
+            true: s2
+            _: s4
+    instances:
+      value:
+        value: >-
+          _root.precision_16bit
+            ? 3.14159265358979323846 * raw / 1800.0
+            : 3.14159265358979323846 * raw / 180000000.0
+    -webide-representation: "{value:dec}"
+  color:
+    seq:
+      - id: color_since_v5
+        if: _root.version >= 500
+        type: color_new
+      - id: color_v4
+        if: _root.version >= 400 and _root.version < 500
+        type: color_middle
+      - id: color_before_v4
+        if: _root.version < 400
+        type: color_old
+    types:
+      color_new:
+        seq:
+          - id: color_model_raw
+            type: u2
+          - id: color_palette_raw
+            if: 'color_model_raw != 0x1e'
+            type: u2
+          - id: unknown
+            if: 'color_model_raw != 0x1e'
+            size: 4
+          - id: color_value
+            type: u4
+        instances:
+          color_model:
+            value: >-
+                    (_root.version >= 1300 and color_model_raw == 0x01) ? 0x19
+                      : color_model_raw == 0x1e ? 0x19
+                        : color_model_raw
+          color_palette:
+            value: >-
+                    color_model_raw == 0x1e ? 0x1e
+                      : color_palette_raw
+      color_middle:
+        seq:
+          - id: color_model
+            type: u2
+          - id: c
+            type: u2
+          - id: m
+            type: u2
+          - id: y
+            type: u2
+          - id: k
+            type: u2
+          - id: unknown
+            size: 2
+        instances:
+          color_value:
+            value: |
+              (k.as<u4> & 0xff) << 24 |
+              (y.as<u4> & 0xff) << 16 |
+              (m.as<u4> & 0xff) << 8 |
+              (c.as<u4> & 0xff)
+      color_old:
+        seq:
+          - id: color_model
+            type: u1
+          - id: color_value
+            type: u4
   not_supported: {}
