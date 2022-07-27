@@ -149,6 +149,45 @@ types:
           switch-on: _parent._parent.chunk_id
           cases:
             '"LIST"': list_chunk_data
+            _: chunk_data_common(_parent._parent.chunk_id)
+        size-eos: true
+  chunk_comp:
+    -webide-representation: '{chunk_id}'
+    params:
+      - id: block_lens
+        type: chunk_sizes
+    seq:
+      - id: chunk_id
+        type: str
+        size: 4
+      - id: len_body_index
+        type: u4
+      - id: body
+        type:
+          switch-on: chunk_id
+          cases:
+            '"LIST"': list_chunk_data_comp(block_lens)
+            _: chunk_data_common(chunk_id)
+        size: len_body
+      - id: pad_byte
+        size: len_body % 2
+    instances:
+      len_body:
+        io: block_lens._io
+        pos: len_body_index * sizeof<u4>
+        type: u4
+    #   chunk_debug:
+    #     value: '(chunk_id == "LIST" ? ":" + chunk_data.as<list_chunk_data_comp>.form_type : "")'
+    # -webide-representation: "{chunk_id}{chunk_debug}"
+  chunk_data_common:
+    params:
+      - id: chunk_id
+        type: str
+    seq:
+      - id: body
+        type:
+          switch-on: chunk_id
+          cases:
             '"DISP"': disp_chunk_data
             '"loda"': loda_chunk_data
             '"lobj"': loda_chunk_data
@@ -174,42 +213,8 @@ types:
             '"txsm"': txsm_chunk_data
             '"udta"': udta_chunk_data
             '"styd"': styd_chunk_data
-        size-eos: true
-  chunk_comp:
-    -webide-representation: '{chunk_id}'
-    params:
-      - id: block_lens
-        type: chunk_sizes
-    seq:
-      - id: chunk_id
-        type: str
-        size: 4
-      - id: len_body_index
-        type: u4
-      - id: body
-        type:
-          switch-on: chunk_id
-          cases:
-            '"LIST"': list_chunk_data_comp(block_lens)
-            '"DISP"': disp_chunk_data
-            '"loda"': loda_chunk_data
-            '"trfd"': not_supported
-            '"outl"': outl_chunk_data
-            '"fild"': fild_chunk_data
+            _: not_supported
 
-            '"vrsn"': vrsn_chunk_data
-            '"mcfg"': mcfg_chunk_data
-        size: len_body
-      - id: pad_byte
-        size: len_body % 2
-    instances:
-      len_body:
-        io: block_lens._io
-        pos: len_body_index * sizeof<u4>
-        type: u4
-    #   chunk_debug:
-    #     value: '(chunk_id == "LIST" ? ":" + chunk_data.as<list_chunk_data_comp>.form_type : "")'
-    # -webide-representation: "{chunk_id}{chunk_debug}"
   vrsn_chunk_data:
     seq:
       - id: version
