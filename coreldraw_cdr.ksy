@@ -840,8 +840,6 @@ types:
       - id: end_marker_id
         type: u4
     instances:
-      num_dashes:
-        value: 'num_dashes_raw > (_io.size - _io.pos) / 2 ? (_io.size - _io.pos) / 2 : num_dashes_raw'
       ofs_dashes:
         value: _io.pos
       dashes:
@@ -849,6 +847,10 @@ types:
         type: u2
         repeat: expr
         repeat-expr: num_dashes
+      num_dashes:
+        value: 'num_dashes_raw <= num_dashes_max ? num_dashes_raw : num_dashes_max'
+      num_dashes_max:
+        value: (_io.size - _io.pos) / sizeof<u2>
     types:
       skip:
         seq:
