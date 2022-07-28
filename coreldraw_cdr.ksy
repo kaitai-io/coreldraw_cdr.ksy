@@ -854,23 +854,23 @@ types:
           - id: unknown1
             if: _root.version >= 600
             size: 6
-          - id: m11
+          - id: a
             type: f8
-          - id: m12
+          - id: c
             type: f8
-          - id: dx_raw
+          - id: tx_raw
             type: f8
-          - id: m21
+          - id: b
             type: f8
-          - id: m22
+          - id: d
             type: f8
-          - id: dy_raw
+          - id: ty_raw
             type: f8
         instances:
-          dx:
-            value: 'dx_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
-          dy:
-            value: 'dy_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
+          tx:
+            value: 'tx_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
+          ty:
+            value: 'ty_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
 
   outl_chunk_data:
     seq:
