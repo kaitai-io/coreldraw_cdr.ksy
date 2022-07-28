@@ -312,7 +312,7 @@ types:
         value: chunk_type_int
         enum: chunk_types
       arg_offsets:
-        doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2110-L2112
+        doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1751-L1753
         pos: start_of_args
         type:
           switch-on: _root.precision_16bit
@@ -323,7 +323,7 @@ types:
         repeat-expr: num_of_args
       arg_types:
         doc: in reverse order against arg_offsets (arg_offsets[0] corresponds to arg_types[num_of_args - 1] and vice versa)
-        doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2113-L2115
+        doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1754-L1756
         pos: start_of_arg_types
         type:
           switch-on: _root.precision_16bit
@@ -797,7 +797,81 @@ types:
         0x06: paragraph_text
         0x14: polygon_coords
 
-  trfd_chunk_data: {}
+  trfd_chunk_data:
+    seq:
+      - id: chunk_length
+        type:
+          switch-on: _root.precision_16bit
+          cases:
+            true: u2
+            _: u4
+        valid: _io.size
+      - id: num_of_args
+        type:
+          switch-on: _root.precision_16bit
+          cases:
+            true: u2
+            _: u4
+      - id: start_of_args
+        type:
+          switch-on: _root.precision_16bit
+          cases:
+            true: u2
+            _: u4
+    instances:
+      arg_offsets:
+        doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1336-L1338
+        pos: start_of_args
+        type:
+          switch-on: _root.precision_16bit
+          cases:
+            true: u2
+            _: u4
+        repeat: expr
+        repeat-expr: num_of_args
+      trafos:
+        type: trafo_wrapper(arg_offsets[_index])
+        repeat: expr
+        repeat-expr: num_of_args
+    types:
+      trafo_wrapper:
+        params:
+          - id: offs
+            type: u4
+        instances:
+          tmp_type:
+            pos: 'offs + (_root.version >= 1300 ? 8 : 0)'
+            type: u2
+          is_trafo:
+            value: tmp_type == 0x08 and _root.version >= 500
+            doc: 'note: only supporting `_root.version >= 500` for now'
+          body:
+            pos: 'offs + (_root.version >= 1300 ? 8 : 0) + tmp_type._sizeof'
+            type: trafo
+            if: is_trafo
+      trafo:
+        seq:
+          - id: unknown1
+            if: _root.version >= 600
+            size: 6
+          - id: m11
+            type: f8
+          - id: m12
+            type: f8
+          - id: dx_raw
+            type: f8
+          - id: m21
+            type: f8
+          - id: m22
+            type: f8
+          - id: dy_raw
+            type: f8
+        instances:
+          dx:
+            value: 'dx_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
+          dy:
+            value: 'dy_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
+
   outl_chunk_data:
     seq:
       - id: line_id
