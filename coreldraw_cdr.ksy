@@ -965,7 +965,7 @@ types:
         seq:
           - id: unknown
             size: '_root.version >= 1300 ? 13 : 2'
-          - id: color1
+          - id: color
             type: color
       gradient:
         seq:
@@ -1545,13 +1545,16 @@ types:
             if: 'color_model_raw != 0x1e'
             size: 4
           - id: color_value
-            type: u4
+            type: u1
+            repeat: expr
+            repeat-expr: 4
         instances:
           color_model:
             value: >-
                     (_root.version >= 1300 and color_model_raw == 0x01) ? 0x19
                       : color_model_raw == 0x1e ? 0x19
                         : color_model_raw
+            enum: color_model
           color_palette:
             value: >-
                     color_model_raw == 0x1e ? 0x1e
@@ -1560,6 +1563,7 @@ types:
         seq:
           - id: color_model
             type: u2
+            enum: color_model
           - id: c
             type: u2
           - id: m
@@ -1572,15 +1576,33 @@ types:
             size: 2
         instances:
           color_value:
-            value: |
-              (k.as<u4> & 0xff) << 24 |
-              (y.as<u4> & 0xff) << 16 |
-              (m.as<u4> & 0xff) << 8 |
-              (c.as<u4> & 0xff)
+            value: '[(c & 0xff).as<u1>, (m & 0xff).as<u1>, (y & 0xff).as<u1>, (k & 0xff).as<u1>].as<u1[]>'
       color_old:
         seq:
           - id: color_model
             type: u1
+            enum: color_model
           - id: color_value
-            type: u4
+            type: u1
+            repeat: expr
+            repeat-expr: 4
+    enums:
+      # https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRCollector.cpp#L336-L582
+      # https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_const.py#L62-L82
+      color_model:
+        1: cmyk100_a
+        2: cmyk100_b
+        3: cmyk255_a
+        4: cmy
+        5: rgb
+        6: hsb
+        7: hls
+        8: bw
+        9: grayscale
+        11: yiq255
+        12: lab
+        17: cmyk255_b
+        18: lab2
+        20: registration
+        21: cmyk100_c
   not_supported: {}
