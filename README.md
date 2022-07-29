@@ -2,7 +2,7 @@
 
 CDR (CorelDRAW drawing) format specification for Kaitai Struct
 
-## What is it
+## What it is
 
 Formal specifications for the CorelDRAW `.cdr` format in [Kaitai Struct](https://kaitai.io/) YAML (`.ksy`), a declarative language for describing binary formats.
 
