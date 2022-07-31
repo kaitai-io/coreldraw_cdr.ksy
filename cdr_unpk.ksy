@@ -1,8 +1,8 @@
 meta:
   id: cdr_unpk
-  title: A made up format for unpacked streams from >=X6 CorelDRAW .cdr file
+  title: Custom auxiliary format for unpacked streams from CorelDRAW .cdr file
   application: bin/cdr-unpk
-  file-extension: cdr.unpk
+  file-extension: unpk
   endian: be
   encoding: ascii
   imports:

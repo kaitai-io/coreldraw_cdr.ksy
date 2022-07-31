@@ -11,9 +11,8 @@ meta:
     wikidata: Q939636
   encoding: ASCII
   endian: le
-  # # Uncomment when imported from cdr_unpk.ksy (for X6+ versions)
-  # imports:
-  #   - file_streams
+  imports:
+    - file_streams
 doc: |
   A native file format of CorelDRAW.
 
@@ -26,10 +25,9 @@ doc-ref:
   - https://github.com/sk1project/uniconvertor/blob/master/src/uc2/formats/cdr/cdr_model.py # rather don't use, very inferior to libcdr
   - https://github.com/photopea/CDR-specification # incomplete, for basic overview only
   - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py # very old and incomplete, but maybe as a curiosity
-# # Uncomment when imported from cdr_unpk.ksy (for X6+ versions)
-# params:
-#   - id: streams
-#     type: file_streams
+params:
+  - id: streams
+    type: file_streams
 seq:
   - id: riff_chunk
     type: riff_chunk_type
@@ -129,13 +127,12 @@ types:
         size: len_body
         if: not is_body_external
     instances:
-      # # Uncomment when imported from cdr_unpk.ksy (for X6+ versions)
-      # body_external:
-      #   io: _root.streams.files[stream_number.as<s4>].body._io
-      #   pos: ofs_body_external.as<u4>
-      #   size: len_body
-      #   type: chunk_body
-      #   if: is_body_external
+      body_external:
+        io: _root.streams.files[stream_number.as<s4>].body._io
+        pos: ofs_body_external.as<u4>
+        size: len_body
+        type: chunk_body
+        if: is_body_external
       len_body:
         value: 'has_redir_data ? len_body_redir.as<u4> : _io.size'
       has_redir_data:

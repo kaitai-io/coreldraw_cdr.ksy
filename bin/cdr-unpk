@@ -1,7 +1,7 @@
 #!/bin/bash
 
-# A simple utility for concatenating unpacked streams from >=X6 CorelDRAW .cdr file
-# (producing the .cdr.unpk file described by the cdr_unpk.ksy spec)
+# Simple utility for dumping unpacked streams from a CorelDRAW .cdr file
+# into a .unpk file described by the cdr_unpk.ksy spec
 
 print_file_size()
 {
