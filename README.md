@@ -35,7 +35,21 @@ To understand why applying the `coreldraw_cdr.ksy` Kaitai Struct specification t
 
 The need for accessing external streams in CDR X6+ files was a problem, because to be able to use visualizers available for [Kaitai Struct](https://kaitai.io/) (e.g. [ksv](https://github.com/kaitai-io/kaitai_struct_visualizer), [Web IDE](https://ide.kaitai.io/)), the entire parsed byte stream needs to be contained in a single file and the top-level type in the main `.ksy` spec must not have any parameters. That's why the [`bin/cdr-unpk`](bin/cdr-unpk) script was created - it extracts the necessary streams from the given `.cdr` file and dumps them into a `.unpk` file in a custom auxiliary format described in [`cdr_unpk.ksy`](cdr_unpk.ksy).
 
-## Standalone use of `coreldraw_cdr.ksy`
+## Standalone use of `coreldraw_cdr.ksy` from your application
+
+There is a branch [`unpack-zip-yourself`](https://github.com/kaitai-io/coreldraw_cdr.ksy/tree/unpack-zip-yourself) available when you want to use the Kaitai Struct parser generated from `coreldraw_cdr.ksy` in your application. It makes the integration easier, because it provides you a top-level parameter where you pass a list of `KaitaiStream` objects for each external data stream in X6+ files (in the order specified in `content/dataFileList.dat` file of X6+ `.cdr` ZIP archives):
+
+```ksy
+params:
+  - id: streams
+    type: io[]
+```
+
+For pre-X6 `.cdr` files, just pass an empty list.
+
+You should be able to understand how to find the data streams in the ZIP archive by looking [into `bin/cdr-unpk`](https://github.com/kaitai-io/coreldraw_cdr.ksy/blob/2266d9908f058a27186a7008f263c0ab74e54beb/bin/cdr-unpk#L30), or you can look [into **libcdr**](https://github.com/LibreOffice/libcdr/blob/master/src/lib/CDRDocument.cpp#L154).
+
+## Manual standalone use of `coreldraw_cdr.ksy` (no support for external streams)
 
 By default, the `coreldraw_cdr.ksy` spec is expected to be imported from [`cdr_unpk.ksy`](cdr_unpk.ksy) and not used by itself. However, if you don't want to preprocess `.cdr` files by [`bin/cdr-unpk`](bin/cdr-unpk), you can manually edit `coreldraw_cdr.ksy` to disable support for external streams (comment out sections `/meta/imports`, `/params` and `/types/chunk_wrapper/instances/body_external`).
 
