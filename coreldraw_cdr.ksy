@@ -11,8 +11,6 @@ meta:
     wikidata: Q939636
   encoding: ASCII
   endian: le
-  imports:
-    - file_streams
 doc: |
   A native file format of CorelDRAW.
 
@@ -27,7 +25,7 @@ doc-ref:
   - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py # very old and incomplete, but maybe as a curiosity
 params:
   - id: streams
-    type: file_streams
+    type: io[]
 seq:
   - id: riff_chunk
     type: riff_chunk_type
@@ -128,7 +126,7 @@ types:
         if: not is_body_external
     instances:
       body_external:
-        io: _root.streams.files[stream_number.as<s4>].body._io
+        io: _root.streams[stream_number.as<s4>]
         pos: ofs_body_external.as<u4>
         size: len_body
         type: chunk_body
