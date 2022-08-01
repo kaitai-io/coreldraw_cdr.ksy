@@ -47,7 +47,7 @@ params:
 
 For pre-X6 `.cdr` files, just pass an empty list.
 
-You should be able to understand how to find the data streams in the ZIP archive by looking [into `bin/cdr-unpk`](https://github.com/kaitai-io/coreldraw_cdr.ksy/blob/2266d9908f058a27186a7008f263c0ab74e54beb/bin/cdr-unpk#L30), or you can look [into **libcdr**](https://github.com/LibreOffice/libcdr/blob/master/src/lib/CDRDocument.cpp#L154).
+You should be able to understand how to find the data streams in the ZIP archive by looking [into `bin/cdr-unpk`](https://github.com/kaitai-io/coreldraw_cdr.ksy/blob/2266d9908f058a27186a7008f263c0ab74e54beb/bin/cdr-unpk#L30), or you can look [into **libcdr**](https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRDocument.cpp#L154).
 
 ## Manual standalone use of `coreldraw_cdr.ksy` (no support for external streams)
 
