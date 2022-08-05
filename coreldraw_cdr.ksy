@@ -1368,7 +1368,16 @@ types:
   iccd_chunk_data: {}
   bbox_chunk_data: {}
   spnd_chunk_data: {}
-  uidr_chunk_data: {}
+  uidr_chunk_data: 
+    seq:
+      - id: color_id
+        type: u4
+      - id: user_id
+        type: u4
+      - id: unknown1
+        size: 36
+      - id: color
+        type: color
   vpat_chunk_data: {}
   font_chunk_data: {}
   stlt_chunk_data: {}
@@ -1602,4 +1611,5 @@ types:
         18: lab2
         20: registration
         21: cmyk100_c
+        25: color_palette
   not_supported: {}
