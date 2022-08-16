@@ -1361,7 +1361,61 @@ types:
     #     12: ciceros_didot
     #     13: didot
     #     16: yard
-  bmp_chunk_data: {}
+  bmp_chunk_data:
+    seq:
+      - id: image_id
+        type:
+          switch-on: _root.precision_16bit
+          cases:
+            true: u2
+            _: u4
+      - size: '_root.version < 600 ? 14 : _root.version < 700 ? 46 : 50'
+      - id: color_model
+        type: u4
+      - size: 4
+      - id: width
+        type: u4
+      - id: height
+        type: u4
+      - size: 4
+      - id: bpp
+        type: u4
+      - size: 4
+      - id: bmp_size
+        type: u4
+      - size: 32
+      - id: palette
+        if: 'bpp < 24 and color_model != 5 and color_model != 6'
+        type: palette_type
+      - id: bitmap
+        size: bmp_size
+    types:
+      palette_type:
+        seq:
+          - id: unknown
+            size: 2
+          - id: palette_size_raw
+            type: u2
+          - id: colors
+            type: color_rgb
+            repeat: expr
+            repeat-expr: palette_size
+        types:
+          color_rgb:
+            seq: 
+              - id: b
+                type: u1
+              - id: g
+                type: u1
+              - id: r
+                type: u1
+            instances:
+              color_value:
+                 value: 'b | (g << 8) | (r << 16)' 
+        instances:
+          palette_size:
+            value: 'palette_size_raw > _io.size / 3 ? _io.size / 3 : palette_size_raw'
+          
   bmpf_chunk_data: {}
   ppdt_chunk_data: {}
   ftil_chunk_data: {}
