@@ -1402,7 +1402,7 @@ types:
             repeat-expr: palette_size
         types:
           color_rgb:
-            seq: 
+            seq:
               - id: b
                 type: u1
               - id: g
@@ -1411,18 +1411,18 @@ types:
                 type: u1
             instances:
               color_value:
-                 value: 'b | (g << 8) | (r << 16)' 
+                 value: 'b | (g << 8) | (r << 16)'
         instances:
           palette_size:
             value: 'palette_size_raw > _io.size / 3 ? _io.size / 3 : palette_size_raw'
-          
+
   bmpf_chunk_data: {}
   ppdt_chunk_data: {}
   ftil_chunk_data: {}
   iccd_chunk_data: {}
   bbox_chunk_data: {}
   spnd_chunk_data: {}
-  uidr_chunk_data: 
+  uidr_chunk_data:
     seq:
       - id: color_id
         type: u4
