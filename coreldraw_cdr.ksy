@@ -1394,12 +1394,17 @@ types:
         seq:
           - id: unknown
             size: 2
-          - id: palette_size_raw
+          - id: num_colors_raw
             type: u2
           - id: colors
             type: color_rgb
             repeat: expr
-            repeat-expr: palette_size
+            repeat-expr: num_colors
+        instances:
+          num_colors:
+            value: 'num_colors_raw <= num_colors_max ? num_colors_raw : num_colors_max'
+          num_colors_max:
+            value: '(_io.size - _io.pos) / sizeof<color_rgb>'
         types:
           color_rgb:
             seq:
@@ -1412,9 +1417,6 @@ types:
             instances:
               color_value:
                  value: 'b | (g << 8) | (r << 16)'
-        instances:
-          palette_size:
-            value: 'palette_size_raw > _io.size / 3 ? _io.size / 3 : palette_size_raw'
 
   bmpf_chunk_data: {}
   ppdt_chunk_data: {}
