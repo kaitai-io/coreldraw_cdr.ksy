@@ -1667,5 +1667,5 @@ types:
         18: lab2
         20: registration
         21: cmyk100_c
-        25: color_palette
+        25: spot
   not_supported: {}
