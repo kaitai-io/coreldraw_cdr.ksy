@@ -1519,7 +1519,7 @@ types:
         type: u4
         if: has_set11s
       - id: set11s_raw
-        size: 12 * num_set11s
+        size: 12 * num_set11s.as<u4>
         if: has_set11s
 
       - id: records
@@ -1530,19 +1530,19 @@ types:
       num_fills:
         value: 'num_fills_raw <= num_fills_max ? num_fills_raw : num_fills_max'
       num_fills_max:
-        value: '(_io.size - _io.pos) / fill_size'
+        value: '((_io.size - _io.pos) / fill_size).as<u4>'
       fill_size:
         value: 'sizeof<entry> + (_root.version >= 1300 ? 48 : 0)'
 
       num_outls:
         value: 'num_outls_raw <= num_outls_max ? num_outls_raw : num_outls_max'
       num_outls_max:
-        value: '(_io.size - _io.pos) / sizeof<entry>'
+        value: '((_io.size - _io.pos) / sizeof<entry>).as<u4>'
 
       num_fonts:
         value: 'num_fonts_raw <= num_fonts_max ? num_fonts_raw : num_fonts_max'
       num_fonts_max:
-        value: '(_io.size - _io.pos) / font_size'
+        value: '((_io.size - _io.pos) / font_size).as<u4>'
       font_size:
         value: |
           sizeof<u4> +
@@ -1554,12 +1554,12 @@ types:
       num_aligns:
         value: 'num_aligns_raw <= num_aligns_max ? num_aligns_raw : num_aligns_max'
       num_aligns_max:
-        value: '(_io.size - _io.pos) / sizeof<entry>'
+        value: '((_io.size - _io.pos) / sizeof<entry>).as<u4>'
 
       num_indents:
         value: 'num_indents_raw <= num_indents_max ? num_indents_raw : num_indents_max'
       num_indents_max:
-        value: '(_io.size - _io.pos) / indent_size'
+        value: '((_io.size - _io.pos) / indent_size).as<u4>'
       indent_size:
         # NOTE: the original `indentSize` expression
         # (https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2303)
