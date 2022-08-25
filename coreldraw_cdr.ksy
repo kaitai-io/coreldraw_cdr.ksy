@@ -1443,132 +1443,134 @@ types:
     seq:
       - id: num_records
         type: u4
-      # NOTE: libcdr stops parsing if `num_records == 0`
-
-      - id: num_fills_raw
-        type: u4
-      - id: fills
-        size: fill_size
-        type: entry
-        repeat: expr
-        repeat-expr: num_fills
-
-      - id: num_outls_raw
-        type: u4
-      - id: outls
-        type: entry
-        repeat: expr
-        repeat-expr: num_outls
-
-      - id: num_fonts_raw
-        type: u4
-      - id: fonts
-        type: font
-        repeat: expr
-        repeat-expr: num_fonts
-
-      - id: num_aligns_raw
-        type: u4
-      - id: aligns
-        type: entry
-        repeat: expr
-        repeat-expr: num_aligns
-
-      - id: num_intervals
-        type: u4
-      - id: intervals_raw
-        size: 52 * num_intervals
-
-      - id: num_set5s
-        type: u4
-      - id: set5s_raw
-        size: 152 * num_set5s
-
-      - id: num_tabs
-        type: u4
-      - id: tabs_raw
-        size: 784 * num_tabs
-
-      - id: num_bullets
-        type: u4
-      - id: bullets
-        type: bullet
-        repeat: expr
-        repeat-expr: num_bullets
-
-      - id: num_indents_raw
-        type: u4
-      - id: indents
-        type: indent
-        repeat: expr
-        repeat-expr: num_indents
-
-      # NOTE: libcdr spells this "hypens" (see https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2316),
-      # but I can't find that spelling in any English dictionary
-      - id: num_hyphens
-        type: u4
-      - id: hyphens_raw
-        size: '(32 + (_root.version >= 1300 ? 4 : 0)) * num_hyphens'
-
-      - id: num_dropcaps
-        type: u4
-      - id: dropcaps_raw
-        size: 28 * num_dropcaps
-
-      - id: num_set11s
-        type: u4
-        if: has_set11s
-      - id: set11s_raw
-        size: 12 * num_set11s.as<u4>
-        if: has_set11s
-
+      - id: mapping_section
+        type: mappings
+        if: num_records != 0
       - id: records
         type: record
         repeat: expr
         repeat-expr: num_records
-    instances:
-      num_fills:
-        value: 'num_fills_raw <= num_fills_max ? num_fills_raw : num_fills_max'
-      num_fills_max:
-        value: '((_io.size - _io.pos) / fill_size).as<u4>'
-      fill_size:
-        value: 'sizeof<entry> + (_root.version >= 1300 ? 48 : 0)'
-
-      num_outls:
-        value: 'num_outls_raw <= num_outls_max ? num_outls_raw : num_outls_max'
-      num_outls_max:
-        value: '((_io.size - _io.pos) / sizeof<entry>).as<u4>'
-
-      num_fonts:
-        value: 'num_fonts_raw <= num_fonts_max ? num_fonts_raw : num_fonts_max'
-      num_fonts_max:
-        value: '((_io.size - _io.pos) / font_size).as<u4>'
-      font_size:
-        value: |
-          sizeof<u4> +
-          sizeof<u2> * 2 +
-          8 +
-          (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) +
-          (_root.version < 1000 ? 12 : 20) * 2
-
-      num_aligns:
-        value: 'num_aligns_raw <= num_aligns_max ? num_aligns_raw : num_aligns_max'
-      num_aligns_max:
-        value: '((_io.size - _io.pos) / sizeof<entry>).as<u4>'
-
-      num_indents:
-        value: 'num_indents_raw <= num_indents_max ? num_indents_raw : num_indents_max'
-      num_indents_max:
-        value: '((_io.size - _io.pos) / indent_size).as<u4>'
-      indent_size:
-        # NOTE: the original `indentSize` expression
-        # (https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2303)
-        # is apparently incorrect - the `+ 12` is missing there
-        value: 'sizeof<u4> + 12 + (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) * 3'
-
-      has_set11s:
-        value: _root.version > 800
     types:
+      mappings:
+        seq:
+          - id: num_fills_raw
+            type: u4
+          - id: fills
+            size: fill_size
+            type: entry
+            repeat: expr
+            repeat-expr: num_fills
+
+          - id: num_outls_raw
+            type: u4
+          - id: outls
+            type: entry
+            repeat: expr
+            repeat-expr: num_outls
+
+          - id: num_fonts_raw
+            type: u4
+          - id: fonts
+            type: font
+            repeat: expr
+            repeat-expr: num_fonts
+
+          - id: num_aligns_raw
+            type: u4
+          - id: aligns
+            type: entry
+            repeat: expr
+            repeat-expr: num_aligns
+
+          - id: num_intervals
+            type: u4
+          - id: intervals_raw
+            size: 52 * num_intervals
+
+          - id: num_set5s
+            type: u4
+          - id: set5s_raw
+            size: 152 * num_set5s
+
+          - id: num_tabs
+            type: u4
+          - id: tabs_raw
+            size: 784 * num_tabs
+
+          - id: num_bullets
+            type: u4
+          - id: bullets
+            type: bullet
+            repeat: expr
+            repeat-expr: num_bullets
+
+          - id: num_indents_raw
+            type: u4
+          - id: indents
+            type: indent
+            repeat: expr
+            repeat-expr: num_indents
+
+          # NOTE: libcdr spells this "hypens" (see https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2316),
+          # but I can't find that spelling in any English dictionary
+          - id: num_hyphens
+            type: u4
+          - id: hyphens_raw
+            size: '(32 + (_root.version >= 1300 ? 4 : 0)) * num_hyphens'
+
+          - id: num_dropcaps
+            type: u4
+          - id: dropcaps_raw
+            size: 28 * num_dropcaps
+
+          - id: num_set11s
+            type: u4
+            if: has_set11s
+          - id: set11s_raw
+            size: 12 * num_set11s.as<u4>
+            if: has_set11s
+        instances:
+          num_fills:
+            value: 'num_fills_raw <= num_fills_max ? num_fills_raw : num_fills_max'
+          num_fills_max:
+            value: '((_io.size - _io.pos) / fill_size).as<u4>'
+          fill_size:
+            value: 'sizeof<entry> + (_root.version >= 1300 ? 48 : 0)'
+
+          num_outls:
+            value: 'num_outls_raw <= num_outls_max ? num_outls_raw : num_outls_max'
+          num_outls_max:
+            value: '((_io.size - _io.pos) / sizeof<entry>).as<u4>'
+
+          num_fonts:
+            value: 'num_fonts_raw <= num_fonts_max ? num_fonts_raw : num_fonts_max'
+          num_fonts_max:
+            value: '((_io.size - _io.pos) / font_size).as<u4>'
+          font_size:
+            value: |
+              sizeof<u4> +
+              sizeof<u2> * 2 +
+              8 +
+              (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) +
+              (_root.version < 1000 ? 12 : 20) * 2
+
+          num_aligns:
+            value: 'num_aligns_raw <= num_aligns_max ? num_aligns_raw : num_aligns_max'
+          num_aligns_max:
+            value: '((_io.size - _io.pos) / sizeof<entry>).as<u4>'
+
+          num_indents:
+            value: 'num_indents_raw <= num_indents_max ? num_indents_raw : num_indents_max'
+          num_indents_max:
+            value: '((_io.size - _io.pos) / indent_size).as<u4>'
+          indent_size:
+            # NOTE: the original `indentSize` expression
+            # (https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2303)
+            # is apparently incorrect - the `+ 12` is missing there
+            value: 'sizeof<u4> + 12 + (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) * 3'
+
+          has_set11s:
+            value: _root.version > 800
       entry:
         seq:
           - id: id
@@ -1642,7 +1644,7 @@ types:
           # FIXME: this actually has a known structure (https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2352-L2368),
           # but it's not important to me right now
           - size: |
-              (num > 1 ? sizeof<u4> * 4 + (_parent.has_set11s ? sizeof<u4> : 0) : 0) +
+              (num > 1 ? sizeof<u4> * 4 + (_parent.mapping_section.has_set11s ? sizeof<u4> : 0) : 0) +
               (num > 2 ? sizeof<u4> * 5 : 0)
   txsm_chunk_data: {}
   udta_chunk_data: {}
