@@ -925,6 +925,8 @@ types:
         value: 'num_dashes_raw <= num_dashes_max ? num_dashes_raw : num_dashes_max'
       num_dashes_max:
         value: (_io.size - _io.pos) / sizeof<u2>
+      stretch:
+        value: stretch_raw / 100.0
     types:
       skip:
         seq:
@@ -1392,15 +1394,20 @@ types:
         seq:
           - id: unknown
             size: 2
-          - id: palette_size_raw
+          - id: num_colors_raw
             type: u2
           - id: colors
             type: color_rgb
             repeat: expr
-            repeat-expr: palette_size
+            repeat-expr: num_colors
+        instances:
+          num_colors:
+            value: 'num_colors_raw <= num_colors_max ? num_colors_raw : num_colors_max'
+          num_colors_max:
+            value: '(_io.size - _io.pos) / sizeof<color_rgb>'
         types:
           color_rgb:
-            seq: 
+            seq:
               - id: b
                 type: u1
               - id: g
@@ -1409,18 +1416,15 @@ types:
                 type: u1
             instances:
               color_value:
-                 value: 'b | (g << 8) | (r << 16)' 
-        instances:
-          palette_size:
-            value: 'palette_size_raw > _io.size / 3 ? _io.size / 3 : palette_size_raw'
-          
+                 value: 'b | (g << 8) | (r << 16)'
+
   bmpf_chunk_data: {}
   ppdt_chunk_data: {}
   ftil_chunk_data: {}
   iccd_chunk_data: {}
   bbox_chunk_data: {}
   spnd_chunk_data: {}
-  uidr_chunk_data: 
+  uidr_chunk_data:
     seq:
       - id: color_id
         type: u4
@@ -1663,5 +1667,5 @@ types:
         18: lab2
         20: registration
         21: cmyk100_c
-        25: color_palette
+        25: spot
   not_supported: {}
