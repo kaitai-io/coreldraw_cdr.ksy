@@ -678,21 +678,11 @@ types:
           cy:
             value: y.value / 2.0
           rx:
-            value: >-
-                  cx >= 0 ? cx : -cx
+            value: 'cx < 0 ? -cx : cx'
           ry:
-            value: >-
-                  cy >= 0 ? cy : -cy
+            value: 'cy < 0 ? -cy : cy'
           pie:
-            value: 'pie_raw != 0 ? true : false'
-          angle1_rem:
-            value: angle1.value % (2 * 3.14159265358979323846)
-          angle1_normalized:
-            value: 'angle1_rem < 0 ? angle1_rem + (2 * 3.14159265358979323846) : angle1_rem'
-          angle2_rem:
-            value: angle2.value % (2 * 3.14159265358979323846)
-          angle2_normalized:
-            value: 'angle2_rem < 0 ? angle2_rem + (2 * 3.14159265358979323846) : angle2_rem'
+            value: pie_raw != 0
       line_and_curve:
         seq:
           - id: num_points_raw
@@ -1021,6 +1011,14 @@ types:
             type: stop
             repeat: expr
             repeat-expr: num_stops
+          - id: unknown6
+            size: 3
+            if: _root.version >= 1300
+          - id: trafo
+            type: transformation
+            # FIXME: `version >= 1600` may not be accurate due to a lack of available
+            # sample files (but it's not present in 1500 and it is present in 1700)
+            if: _root.version >= 1600 and (_io.size - _io.pos) >= sizeof<transformation>
         instances:
           mode:
             value: 'mode_raw & 0xff'
@@ -1075,6 +1073,20 @@ types:
                 value: _io.pos
               offset:
                 value: '(offset_raw & 0xffff) / 100.0'
+          transformation:
+            seq:
+              - id: offset_x_rel
+                type: f8
+                doc: horizontal offset of the fill center relative to the object center
+              - id: offset_y_rel
+                type: f8
+                doc: vertical offset of the fill center relative to the object center
+              - id: width_rel
+                type: f8
+                doc: width of the fill relative to the object width
+              - id: height_rel
+                type: f8
+                doc: height of the fill relative to the object height
       pattern:
         seq:
           - id: unknown1
@@ -1785,12 +1797,18 @@ types:
             true: s2
             _: s4
     instances:
-      value:
+      value_deg:
         value: >-
           _root.precision_16bit
-            ? 3.14159265358979323846 * raw / 1800.0
-            : 3.14159265358979323846 * raw / 180000000.0
-    -webide-representation: "{value:dec}"
+            ? raw / 10.0
+            : raw / 1000000.0
+      value_rad:
+        value: (value_deg / 180.0) * 3.14159265358979323846
+      value_rad_rem:
+        value: value_rad % (2 * 3.14159265358979323846)
+      value_rad_normalized:
+        value: 'value_rad_rem + (value_rad_rem < 0 ? 2 * 3.14159265358979323846 : 0)'
+    -webide-representation: "{value_deg:dec}°"
   color:
     seq:
       - id: color_since_v5
