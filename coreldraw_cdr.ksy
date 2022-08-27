@@ -927,6 +927,8 @@ types:
         value: 'num_dashes_raw <= num_dashes_max ? num_dashes_raw : num_dashes_max'
       num_dashes_max:
         value: (_io.size - _io.pos) / sizeof<u2>
+      stretch:
+        value: stretch_raw / 100.0
     types:
       skip:
         seq:
