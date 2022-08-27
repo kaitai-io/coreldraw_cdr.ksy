@@ -1013,6 +1013,14 @@ types:
             type: stop
             repeat: expr
             repeat-expr: num_stops
+          - id: unknown6
+            size: 3
+            if: _root.version >= 1300
+          - id: trafo
+            type: transformation
+            # FIXME: `version >= 1600` may not be accurate due to a lack of available
+            # sample files (but it's not present in 1500 and it is present in 1700)
+            if: _root.version >= 1600 and (_io.size - _io.pos) >= sizeof<transformation>
         instances:
           mode:
             value: 'mode_raw & 0xff'
@@ -1067,6 +1075,20 @@ types:
                 value: _io.pos
               offset:
                 value: '(offset_raw & 0xffff) / 100.0'
+          transformation:
+            seq:
+              - id: offset_x_rel
+                type: f8
+                doc: horizontal offset of the fill center relative to the object center
+              - id: offset_y_rel
+                type: f8
+                doc: vertical offset of the fill center relative to the object center
+              - id: width_rel
+                type: f8
+                doc: width of the fill relative to the object width
+              - id: height_rel
+                type: f8
+                doc: height of the fill relative to the object height
       pattern:
         seq:
           - id: unknown1
