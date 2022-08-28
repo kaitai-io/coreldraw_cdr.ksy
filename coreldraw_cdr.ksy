@@ -844,19 +844,24 @@ types:
         doc: |
           See <https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/matrix#syntax>
           for an explanation of matrix parameter labels.
+        doc-ref: https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_utils.py#L29
         seq:
           - id: unknown1
             if: _root.version >= 600
             size: 6
           - id: a
+            -orig-id: m11 # UniConvertor
             type: f8
           - id: c
+            -orig-id: m12 # UniConvertor
             type: f8
           - id: tx_raw
             type: f8
           - id: b
+            -orig-id: m21 # UniConvertor
             type: f8
           - id: d
+            -orig-id: m22 # UniConvertor
             type: f8
           - id: ty_raw
             type: f8
