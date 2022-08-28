@@ -22,7 +22,7 @@ doc: |
 
 doc-ref:
   - https://github.com/LibreOffice/libcdr/tree/master/src/lib
-  - https://github.com/sk1project/uniconvertor/blob/master/src/uc2/formats/cdr/cdr_model.py # rather don't use, very inferior to libcdr
+  - https://github.com/sk1project/uniconvertor/blob/master/src/uc2/formats/cdr/cdr_model.py # better not rely on it, much simpler and dumber than libcdr
   - https://github.com/photopea/CDR-specification # incomplete, for basic overview only
   - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py # very old and incomplete, but maybe as a curiosity
 params:
