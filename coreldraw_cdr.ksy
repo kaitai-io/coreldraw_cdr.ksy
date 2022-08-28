@@ -33,7 +33,7 @@ seq:
     type: riff_chunk_type
 instances:
   version:
-    value: 'riff_chunk.body.version'
+    value: riff_chunk.body.version
     # value: >-
     #   riff_chunk.body.chunks.chunks[0].chunk_id == 'vrsn'
     #     ? riff_chunk.body.chunks.chunks[0].body.as<vrsn_chunk_data>.version
@@ -54,7 +54,7 @@ types:
       - id: pad_byte
         size: len_body % 2
   chunks_normal:
-    # Defined this type to be consistent with the unconsistent `cmpr` chunk
+    # Defined this type to be consistent with the inconsistent `cmpr` chunk
     seq:
       - id: chunks
         type: chunk
@@ -81,14 +81,18 @@ types:
         doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L38-L49
         value: >-
           c == 0x20
-            ? 300
-            : c < 0x31
-              ? 0
-              : c < 0x3a
-                ? 100 * (c - 0x30)
-                : c < 0x41
-                  ? 0
-                  : 100 * (c - 0x37)
+            ? 300 :
+          c < 0x31
+            ? 0 :
+          c < 0x3a
+            ? 100 * (c - 0x30) :
+          c < 0x41
+            ? 0 :
+          c < 0x49
+            ? 100 * (c - 0x37) :
+          c == 0x49
+            ? 0
+            : 100 * (c - 0x38)
   chunk:
     -webide-representation: '{chunk_id}'
     seq:
@@ -1037,7 +1041,7 @@ types:
               #   CDR 1300: 24 (analysis: `16 + 8 = 16 + (5 + 3)`)
               #   CDR 1400: 24
               #   CDR 1500: 45 (analysis: `16 + 29 = 16 + (26 + 3)`)
-              #   CDR 2300 (according to 'vrsn' chunk): 45
+              #   CDR 2300: 45
               - size: 0
                 if: ofs_start < 0
               - id: color
