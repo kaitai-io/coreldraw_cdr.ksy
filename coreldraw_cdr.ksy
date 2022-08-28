@@ -841,6 +841,9 @@ types:
             type: trafo
             if: is_trafo
       trafo:
+        doc: |
+          See <https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/matrix#syntax>
+          for an explanation of matrix parameter labels.
         seq:
           - id: unknown1
             if: _root.version >= 600
