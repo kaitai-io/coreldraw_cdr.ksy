@@ -192,6 +192,7 @@ types:
             '"DISP"': disp_chunk_data
             '"loda"': loda_chunk_data
             '"lobj"': loda_chunk_data
+            '"fver"': fver_chunk_data
             '"vrsn"': vrsn_chunk_data
             '"trfd"': trfd_chunk_data
             '"outl"': outl_chunk_data
@@ -216,6 +217,20 @@ types:
             '"styd"': styd_chunk_data
             _: not_supported
 
+  fver_chunk_data:
+    seq:
+      - id: full_version
+        type: u2
+        doc: e.g. `1800` - same as `_root.riff_chunk.body.version` or `<vrsn_chunk_data>.version`
+      - id: version_patch
+        type: u2
+        doc: seems to be always `1`
+      - id: version_minor
+        type: u2
+        doc: seems to be always `0`
+      - id: version_major
+        type: u2
+        doc: e.g. `18` for a CDR 18.0
   vrsn_chunk_data:
     seq:
       - id: version
