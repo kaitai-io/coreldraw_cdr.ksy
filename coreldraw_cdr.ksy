@@ -20,7 +20,7 @@ doc: |
 
 doc-ref:
   - https://github.com/LibreOffice/libcdr/tree/master/src/lib
-  - https://github.com/sk1project/uniconvertor/blob/master/src/uc2/formats/cdr/cdr_model.py # rather don't use, very inferior to libcdr
+  - https://github.com/sk1project/uniconvertor/blob/master/src/uc2/formats/cdr/cdr_model.py # better not rely on it, much simpler and dumber than libcdr
   - https://github.com/photopea/CDR-specification # incomplete, for basic overview only
   - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py # very old and incomplete, but maybe as a curiosity
 params:
@@ -31,7 +31,7 @@ seq:
     type: riff_chunk_type
 instances:
   version:
-    value: 'riff_chunk.body.version'
+    value: riff_chunk.body.version
     # value: >-
     #   riff_chunk.body.chunks.chunks[0].chunk_id == 'vrsn'
     #     ? riff_chunk.body.chunks.chunks[0].body.as<vrsn_chunk_data>.version
@@ -52,7 +52,7 @@ types:
       - id: pad_byte
         size: len_body % 2
   chunks_normal:
-    # Defined this type to be consistent with the unconsistent `cmpr` chunk
+    # Defined this type to be consistent with the inconsistent `cmpr` chunk
     seq:
       - id: chunks
         type: chunk
@@ -79,14 +79,18 @@ types:
         doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L38-L49
         value: >-
           c == 0x20
-            ? 300
-            : c < 0x31
-              ? 0
-              : c < 0x3a
-                ? 100 * (c - 0x30)
-                : c < 0x41
-                  ? 0
-                  : 100 * (c - 0x37)
+            ? 300 :
+          c < 0x31
+            ? 0 :
+          c < 0x3a
+            ? 100 * (c - 0x30) :
+          c < 0x41
+            ? 0 :
+          c < 0x49
+            ? 100 * (c - 0x37) :
+          c == 0x49
+            ? 0
+            : 100 * (c - 0x38)
   chunk:
     -webide-representation: '{chunk_id}'
     seq:
@@ -186,6 +190,7 @@ types:
             '"DISP"': disp_chunk_data
             '"loda"': loda_chunk_data
             '"lobj"': loda_chunk_data
+            '"fver"': fver_chunk_data
             '"vrsn"': vrsn_chunk_data
             '"trfd"': trfd_chunk_data
             '"outl"': outl_chunk_data
@@ -210,6 +215,20 @@ types:
             '"styd"': styd_chunk_data
             _: not_supported
 
+  fver_chunk_data:
+    seq:
+      - id: full_version
+        type: u2
+        doc: e.g. `1800` - same as `_root.riff_chunk.body.version` or `<vrsn_chunk_data>.version`
+      - id: version_patch
+        type: u2
+        doc: seems to be always `1`
+      - id: version_minor
+        type: u2
+        doc: seems to be always `0`
+      - id: version_major
+        type: u2
+        doc: e.g. `18` for a CDR 18.0
   vrsn_chunk_data:
     seq:
       - id: version
@@ -835,19 +854,27 @@ types:
             type: trafo
             if: is_trafo
       trafo:
+        doc: |
+          See <https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/matrix#syntax>
+          for an explanation of matrix parameter labels.
+        doc-ref: https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_utils.py#L29
         seq:
           - id: unknown1
             if: _root.version >= 600
             size: 6
           - id: a
+            -orig-id: m11 # UniConvertor
             type: f8
           - id: c
+            -orig-id: m12 # UniConvertor
             type: f8
           - id: tx_raw
             type: f8
           - id: b
+            -orig-id: m21 # UniConvertor
             type: f8
           - id: d
+            -orig-id: m22 # UniConvertor
             type: f8
           - id: ty_raw
             type: f8
@@ -1035,7 +1062,7 @@ types:
               #   CDR 1300: 24 (analysis: `16 + 8 = 16 + (5 + 3)`)
               #   CDR 1400: 24
               #   CDR 1500: 45 (analysis: `16 + 29 = 16 + (26 + 3)`)
-              #   CDR 2300 (according to 'vrsn' chunk): 45
+              #   CDR 2300: 45
               - size: 0
                 if: ofs_start < 0
               - id: color
