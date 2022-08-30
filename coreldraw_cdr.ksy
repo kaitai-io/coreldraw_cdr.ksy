@@ -1277,7 +1277,10 @@ types:
                 pos: _io.pos
                 type: u4
   arrw_chunk_data: {}
-  flgs_chunk_data: {}
+  flgs_chunk_data:
+    seq:
+      - id: flags
+        type: u4
   mcfg_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2190
     # mostly reverse-engineered from generated files using CorelDRAW 9
@@ -1463,7 +1466,16 @@ types:
   ppdt_chunk_data: {}
   ftil_chunk_data: {}
   iccd_chunk_data: {}
-  bbox_chunk_data: {}
+  bbox_chunk_data:
+    seq:
+      - id: x0
+        type: coord
+      - id: y0
+        type: coord
+      - id: x1
+        type: coord
+      - id: y1
+        type: coord
   spnd_chunk_data: {}
   uidr_chunk_data:
     seq:
