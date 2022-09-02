@@ -1757,9 +1757,7 @@ types:
     instances:
       value:
         value: >-
-          _root.precision_16bit
-            ? raw / 1000.0
-            : raw / 254000.0
+          raw / (_root.precision_16bit ? 1000.0 : 254000.0)
     -webide-representation: "{value:dec}"
   points_list:
     params:
