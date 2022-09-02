@@ -1319,7 +1319,33 @@ types:
   flgs_chunk_data:
     seq:
       - id: flags
-        type: u4
+        size: 4
+    instances:
+      chunk_type:
+        value: flags[3] & 0xff
+        enum: chunk_types
+      is_master_page:
+        value: flags[2] != 0
+        if: chunk_type == chunk_types::page
+        doc: flags[2] is `0x00` or `0x01`
+        doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRContentCollector.cpp#L195
+      layer_type:
+        value: flags[0] & 0xff
+        enum: layer_types
+        if: chunk_type == chunk_types::layer
+    enums:
+      # https://sourceforge.net/p/uniconvertor/code/145/tree/formats/CDR/cdr_explorer/src/chunks.py#l490
+      layer_types:
+        0x08: desktop
+        0x0a: guides
+        0x1a: grid
+      # https://sourceforge.net/p/uniconvertor/code/145/tree/formats/CDR/cdr_explorer/src/chunks.py#l926
+      chunk_types:
+        0x08: object
+        0x10: group
+        0x90: page
+        0x98: layer
+
   mcfg_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2190
     # mostly reverse-engineered from generated files using CorelDRAW 9
