@@ -830,15 +830,15 @@ types:
           id: page_size
           doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1817-L1818
       chunk_types:
-        0x26: spline
         0x01: rectangle
         0x02: ellipse
         0x03: line_and_curve
-        0x25: path
         0x04: artistic_text
         0x05: bitmap
         0x06: paragraph_text
         0x14: polygon_coords
+        0x25: path
+        0x26: spline
 
   trfd_chunk_data:
     seq:
@@ -1870,8 +1870,59 @@ types:
           - id: y
             type: coord
         instances:
+          unknown_flag:
+            value: (type & 0b0000_0001) != 0
+            doc: |
+              in 41 sample .cdr files in various CDR versions covering the entire range
+              from 1100 to 2400, this has always had the same value throughout the file -
+              for 39 files `false`, only for 2 files `true` (both in version 1300, but
+              other 4 files also in version 1300 were using `false`)
+          char_start:
+            value: (type & 0b0000_0010) != 0
+            doc-ref: https://sourceforge.net/p/uniconvertor/code/145/tree/formats/CDR/cdr_explorer/src/chunks.py#l396
+          can_modify:
+            value: (type & 0b0000_0100) != 0
+            doc: |
+              According to sample files:
+
+              * for `operations::move_to` it's been always `true` in all 41 samples that I had;
+
+              * for `operations::line_to` it's `true` for the normal `is_closing_path == false`
+              point, but `false` for the explicit close path segment with `is_closing_path == true`
+              (CDR doesn't have auto-closing paths, they are closed explicitly);
+
+              * for `operations::cubic_bezier_to`, `false` only appears with `is_closing_path ==
+              true`, `true` comes only with `is_closing_path == false` for all .cdr files with
+              `unknown_flag == false` (i.e. the vast majority of .cdr files);
+
+                in the 2 samples in version 1300 with `unknown_flag == true` (see the description of
+                `unknown_flag`), most `can_modify == true` points have `is_closing_path == false` as
+                usual, but occasionally there is a point with `can_modify == true` and
+                `is_closing_path == true`, every time at the very end of `points`;
+
+              * for `operations::control_point` it's `false` in 99% of cases;
+
+                only 1 sample (in version 1400) out of 41 had a `chunk_types::line_and_curve` object
+                (the first 'LIST:obj ' chunk of the content page) where all points except the last
+                one (which was the only "close path" segment, i.e. a `operations::line_to` point
+                with `is_closing_path == true` and the `x`, `y` coordinates the same as the initial
+                `operations::move_to` point of the subpath) had `can_modify` set to `true`, but it
+                is apparently rare.
+            doc-ref: https://sourceforge.net/p/uniconvertor/code/145/tree/formats/CDR/cdr_explorer/src/chunks.py#l398
           is_closing_path:
             value: (type & 0b0000_1000) != 0
+            doc: |
+              According to sample files:
+
+              * for `operations::move_to` it's `true` in closed subpaths, `false` in open subpaths;
+
+              * for `operations::line_to` and `operations::cubic_bezier_to` it's `true` if the
+              segment closes the current subpath (meaning that the `x`, `y` coordinates of such
+              `operations::{line_to,cubic_bezier_to}` point with `is_closing_path == true` are
+              always the same as in the initial `operations::move_to` point with `is_closing_path ==
+              true` of the subpath), `false` otherwise;
+
+              * for `operations::control_point` it's always `false`.
           continuation:
             value: (type & 0b0011_0000) >> 4
             enum: continuations
@@ -1885,7 +1936,7 @@ types:
             0b10:
               id: cubic_bezier_to
               doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CommonParser.cpp#L116-L127
-            0b11: add_to_tmp_points
+            0b11: control_point
           continuations:
             0b00: angle
             0b01: smooth
