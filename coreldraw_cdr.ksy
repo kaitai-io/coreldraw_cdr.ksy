@@ -336,7 +336,7 @@ types:
             true: u2
             _: u4
         repeat: expr
-        repeat-expr: num_of_args
+        repeat-expr: num_of_args + 1
       arg_types:
         doc: in reverse order against arg_offsets (arg_offsets[0] corresponds to arg_types[num_of_args - 1] and vice versa)
         doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1754-L1756
@@ -349,9 +349,8 @@ types:
         repeat: expr
         repeat-expr: num_of_args
       args:
-        type: arg(arg_offsets[_index], arg_types[(num_of_args.as<s4> - 1) - _index])
+        type: 'arg(arg_offsets[_index], arg_offsets[_index + 1] - arg_offsets[_index], arg_types[(num_of_args.as<s4> - 1) - _index])'
         repeat: expr
-        # repeat-expr: num_of_args - 1
         repeat-expr: num_of_args
     types:
       # unsigned:
@@ -365,7 +364,9 @@ types:
       #   -webide-representation: "{value:dec}"
       arg:
         params:
-          - id: offs
+          - id: ofs_body
+            type: u4
+          - id: len_body
             type: u4
           - id: type_raw
             type: u4
@@ -375,7 +376,8 @@ types:
             value: type_raw
             enum: arg_type
           body:
-            pos: offs
+            pos: ofs_body
+            size: len_body
             type:
               switch-on: type
               cases:
