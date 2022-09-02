@@ -832,15 +832,15 @@ types:
           id: page_size
           doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1817-L1818
       chunk_types:
-        0x26: spline
         0x01: rectangle
         0x02: ellipse
         0x03: line_and_curve
-        0x25: path
         0x04: artistic_text
         0x05: bitmap
         0x06: paragraph_text
         0x14: polygon_coords
+        0x25: path
+        0x26: spline
 
   trfd_chunk_data:
     seq:
