@@ -1887,7 +1887,7 @@ types:
             0b10:
               id: cubic_bezier_to
               doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CommonParser.cpp#L116-L127
-            0b11: add_to_tmp_points
+            0b11: control_point
           continuations:
             0b00: angle
             0b01: smooth
