@@ -751,7 +751,7 @@ types:
           - id: unknown2
             size: 16
           - id: points
-            type: points_list(num_points_raw1 + num_points_raw2)
+            type: points_list((num_points_raw1 + num_points_raw2).as<u4>)
       artistic_text:
         seq:
           - id: x
@@ -1850,7 +1850,7 @@ types:
         repeat: expr
         repeat-expr: num_points
       num_points:
-        value: 'num_points_raw <= num_points_max ? num_points_raw : num_points_max'
+        value: 'num_points_raw <= num_points_max ? num_points_raw.as<s4> : num_points_max'
       num_points_max:
         value: '(_io.size - _io.pos) / (point_size + sizeof<u1>)'
       point_size:
