@@ -389,7 +389,7 @@ types:
                 'arg_type::polygon_transform': polygon_transform
                 'arg_type::opacity': opacity
                 'arg_type::page_size': page_size
-            # size-eos: true
+                'arg_type::guid_layer': guid
 
       loda_coords:
         seq:
@@ -624,6 +624,11 @@ types:
             type: coord
           - id: height
             type: coord
+      guid:
+        -webide-representation: "{value:uuid=ms}"
+        seq:
+          - id: value
+            size: 16
 
       spline: {}
       rectangle:
@@ -825,6 +830,17 @@ types:
         19130:
           id: page_size
           doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1817-L1818
+        40050:
+          id: guid_layer
+          doc-ref: |
+            randomly generated for each layer (in fact, if you create two
+            identical empty CorelDRAW documents using the same steps and save
+            them into different .cdr files, these GUIDs would likely be the only
+            thing in which these .cdr files differ, and is also the reason why
+            they don't have exactly the same file size due to compression), in
+            particular for the "Guides", "Desktop" and "Document Grid" layers in
+            the master page which are then referenced in content pages via the
+            same GUID
       chunk_types:
         0x01: rectangle
         0x02: ellipse
