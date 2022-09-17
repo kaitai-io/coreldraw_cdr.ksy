@@ -22,9 +22,31 @@ doc: |
 
 doc-ref:
   - https://github.com/LibreOffice/libcdr/tree/master/src/lib
-  - https://github.com/sk1project/uniconvertor/blob/master/src/uc2/formats/cdr/cdr_model.py # better not rely on it, much simpler and dumber than libcdr
-  - https://github.com/photopea/CDR-specification # incomplete, for basic overview only
-  - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py # very old and incomplete, but maybe as a curiosity
+
+  # better not rely on it, much simpler and dumber than libcdr
+  - https://github.com/sk1project/uniconvertor/tree/master/src/uc2/formats/cdr
+
+  # incomplete, but specifies some chunks not found elsewhere
+  - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py
+
+  # code isn't interesting, but there is a comment documenting previously
+  # unknown chunks and mapping them to
+  # https://community.coreldraw.com/sdk/api/draw equivalents
+  - https://lists.inkscape.org/hyperkitty/list/inkscape-devel@lists.inkscape.org/message/JQYOMLQFCDEDHVDWZ5WDM7QBDFUFJXVD/attachment/2/cdr2svg.py.bz2
+
+  # it might be a good idea to explore the official CorelDRAW API (and maybe
+  # even play with it and generate various sample files), because it's very
+  # likely that the properties available via the API will be projected into the
+  # resulting .cdr file (and reverse enginnering of generated .cdr files is
+  # easier when you know what to look for)
+  - https://community.coreldraw.com/sdk/api/draw
+
+  # focuses on CDR 4.0 only (which is a really old version), but many things
+  # remained the same for the new versions, so it may also help reveal something
+  - https://github.com/KDE/calligra/tree/filters-karbon-cdr/filters/karbon/cdr
+
+  # incomplete, for basic overview only
+  - https://github.com/photopea/CDR-specification
 params:
   - id: streams
     type: file_streams
