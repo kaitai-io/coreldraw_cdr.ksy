@@ -2024,15 +2024,16 @@ types:
             repeat-expr: 4
         instances:
           color_model:
-            value: >-
-                    (_root.version >= 1300 and color_model_raw == 0x01) ? 0x19
-                      : color_model_raw == 0x1e ? 0x19
-                        : color_model_raw
+            value: |
+              (_root.version >= 1300 and color_model_raw == 0x01) ? 0x19
+                : color_model_raw == 0x1e ? 0x19
+                  : color_model_raw
             enum: color_model
           color_palette:
-            value: >-
-                    color_model_raw == 0x1e ? 0x1e
-                      : color_palette_raw
+            value: |
+              color_model_raw == 0x1e ? 0x1e
+                : color_palette_raw
+            enum: color_palette
       color_middle:
         seq:
           - id: color_model
@@ -2063,10 +2064,11 @@ types:
     enums:
       # https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRCollector.cpp#L336-L582
       # https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_const.py#L62-L82
+      # https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype?lang=cli
       color_model:
-        1: cmyk100_a
-        2: cmyk100_b
-        3: cmyk255_a
+        1: pantone
+        2: cmyk100_i2
+        3: cmyk255_i3
         4: cmy
         5: rgb
         6: hsb
@@ -2074,10 +2076,233 @@ types:
         8: bw
         9: grayscale
         11: yiq255
-        12: lab
-        17: cmyk255_b
-        18: lab2
+        12: lab_i12
+        14: pantone_hex
+        15:
+          id: hexachrome
+          doc-ref: CorelDRAW 9 Draw_scr.hlp
+          doc: no longer present in CorelDRAW 10 DRAW10VBA.HLP
+        17: cmyk255_i17
+        18: lab_i18
         20: registration
-        21: cmyk100_c
+        21: cmyk100_i21
+        22:
+          id: user_ink
+          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype?lang=cli
         25: spot
+        26:
+          id: multi_channel
+          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype?lang=cli
+        99:
+          id: mixed
+          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype?lang=cli
+      # CorelDRAW 9: Programs/Draw_scr.hlp, Programs/Data/*.{cpl,pcp}
+      # CorelDRAW 10: Programs/DRAW10VBA.HLP, Programs/Data/*.cpl
+      # CorelDRAW 11: Programs/DRAW11VBA.HLP, Programs/Data/*.cpl
+      # CorelDRAW X7:
+      #   - https://community.coreldraw.com/sdk/api/draw/17/e/cdrpaletteid?lang=cli
+      #   - Color/Palettes/**/*.xml
+      color_palette:
+        0: custom
+        1:
+          id: trumatch
+          doc: TRUMATCH Colors # palette name
+        2:
+          id: pantone_process
+          -orig-id:
+            - PANTONE PROCESS # CorelDRAW 9 Draw_scr.hlp
+            - pantone # palette file name (without the .cpl/.xml extension)
+          doc: PANTONE(r) process coated
+        3:
+          id: pantone_corel8
+          -orig-id:
+            - PANTONE SPOT # CorelDRAW 9 Draw_scr.hlp
+            - cdrPANTONECorel8 # CorelDRAW 10 DRAW10VBA.HLP
+            - pantone8
+          doc: PANTONE MATCHING SYSTEM - Corel 8
+        4:
+          id: image
+          -orig-id: IMAGE # CorelDRAW 9 Draw_scr.hlp, no longer in CorelDRAW 10 DRAW10VBA.HLP
+        5:
+          id: user
+          -orig-id: USER # CorelDRAW 9 Draw_scr.hlp, no longer in CorelDRAW 10 DRAW10VBA.HLP
+        6:
+          id: custom_fixed
+          -orig-id: CUSTOMFIXED # CorelDRAW 9 Draw_scr.hlp, no longer in CorelDRAW 10 DRAW10VBA.HLP
+        7:
+          id: uniform
+          -orig-id:
+            - RGBSTANDARD # CorelDRAW 9 Draw_scr.hlp
+            - cdrUniform # CorelDRAW 10 DRAW10VBA.HLP
+            - rgbstd
+          doc: Uniform Colors
+        8:
+          id: focoltone
+          -orig-id:
+            - focolton
+          doc: FOCOLTONE Colors
+        9:
+          id: spectra_master
+          -orig-id:
+            - DUPONT # CorelDRAW 9 Draw_scr.hlp
+            - cdrSpectraMaster # CorelDRAW 10 DRAW10VBA.HLP
+            - dupont
+          doc: SpectraMaster(r) Colors
+        10:
+          id: toyo
+          doc: TOYO COLOR FINDER
+        11:
+          id: dic
+          doc: DIC Colors
+        12:
+          id: pantone_hex_coated_corel10
+          -orig-id:
+            - cdrPANTONEHexCoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panhexc
+          doc: PANTONE Hexachrome Coated - Corel 10
+        13:
+          id: lab
+          -orig-id:
+            - labpal
+          doc: Lab Colors
+        14:
+          id: netscape
+          -orig-id:
+            - NETSCAPE # CorelDRAW 9 Draw_scr.hlp
+            - cdrNetscapeNavigator # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - netscape # netscape.cpl is present in CorelDRAW 9, but not anymore in CorelDRAW 10
+        15:
+          id: explorer
+          -orig-id:
+            - EXPLORER # CorelDRAW 9 Draw_scr.hlp
+            - cdrInternetExplorer # CorelDRAW 10 DRAW10VBA.HLP
+            - explorer # explorer.cpl is present in CorelDRAW 9, but not anymore in CorelDRAW 10
+          doc: no longer present in CorelDRAW 11 DRAW11VBA.HLP
+        16: user_inks
+        17:
+          id: pantone_coated_corel10
+          -orig-id:
+            - cdrPANTONECoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panguidc
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L2348
+          doc: PANTONE MATCHING SYSTEM Coated - Corel 10
+        18:
+          id: pantone_uncoated_corel10
+          -orig-id:
+            - cdrPANTONEUncoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panguidu
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L2630
+          doc: PANTONE MATCHING SYSTEM Uncoated - Corel 10
+        20:
+          id: pantone_metallic_corel10
+          -orig-id:
+            - cdrPANTONEMetallic # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panmetlu
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L2912
+          doc: PANTONE Metallic Colors Unvarnished - Corel 10
+        21:
+          id: pantone_pastel_coated_corel10
+          -orig-id:
+            - cdrPANTONEPastelCoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panpastc
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L2982
+          doc: PANTONE Pastel Colors Coated - Corel 10
+        22:
+          id: pantone_pastel_uncoated_corel10
+          -orig-id:
+            - cdrPANTONEPastelUncoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panpastu
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L3032
+          doc: PANTONE Pastel Colors Uncoated - Corel 10
+        23:
+          id: hks
+          -orig-id: HKS(r) Colors
+        24:
+          id: pantone_hex_uncoated_corel10
+          -orig-id:
+            - cdrPANTONEHexUncoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panhexu
+          doc: PANTONE Hexachrome Uncoated - Corel 10
+        25:
+          id: web_safe
+          -orig-id:
+            - WebSafe # file name
+          doc: Web-safe Colors
+        26:
+          id: hks_k
+          -orig-id:
+            - HKS_K # file name
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L3960
+        27:
+          id: hks_n
+          -orig-id:
+            - HKS_N # file name
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L4002
+        28:
+          id: hks_z
+          -orig-id:
+            - HKS_Z # file name
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L4044
+        29:
+          id: hks_e
+          -orig-id:
+            - HKS_E # file name
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L4086
+        30:
+          id: pantone_metallic
+          -orig-id:
+            - panmetlc
+          doc: PANTONE(r) metallic coated
+        31:
+          id: pantone_pastel_coated
+          -orig-id:
+            - panpasc
+          doc: PANTONE(r) pastel coated
+        32:
+          id: pantone_pastel_uncoated
+          -orig-id:
+            - panpasu
+          doc: PANTONE(r) pastel uncoated
+        33:
+          id: pantone_hex_coated
+          -orig-id:
+            - panhexac
+          doc: PANTONE(r) hexachrome(r) coated
+        34:
+          id: pantone_hex_uncoated
+          -orig-id:
+            - PANTONE(r) hexachrome(r) uncoated
+            - panhexau
+        35:
+          id: pantone_matte
+          -orig-id:
+            - pantonem
+          doc: PANTONE(r) solid matte
+        36:
+          id: pantone_coated
+          -orig-id:
+            - pantonec
+          doc: PANTONE(r) solid coated
+        37:
+          id: pantone_uncoated
+          -orig-id:
+            - pantoneu
+          doc: PANTONE(r) solid uncoated
+        38:
+          id: pantone_process_coated_euro
+          -orig-id:
+            - paneuroc
+          doc: PANTONE(r) process coated EURO
+        39:
+          id: pantone_solid2process_euro
+          -orig-id:
+            - pans2pec
+          doc: PANTONE(r) solid to process EURO
+        40:
+          id: svg_named_colors
+          -orig-id:
+            - cdrSVGPalette
+            - SVGColor # file name (SVGColor.xml)
+          doc: SVG Colors
+
   not_supported: {}
