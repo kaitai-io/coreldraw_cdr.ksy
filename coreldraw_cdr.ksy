@@ -222,6 +222,8 @@ types:
             '"fill"': fild_chunk_data
             # '"arrw"': arrw_chunk_data
             '"flgs"': flgs_chunk_data
+            # '"ptrt"': ptrt_chunk_data
+            '"usdn"': usdn_chunk_data
             '"mcfg"': mcfg_chunk_data
             '"bmp "': bmp_chunk_data
             # '"bmpf"': bmpf_chunk_data
@@ -229,6 +231,7 @@ types:
             # '"ftil"': ftil_chunk_data
             # '"iccd"': iccd_chunk_data
             '"bbox"': bbox_chunk_data
+            '"obbx"': obbx_chunk_data
             # '"spnd"': spnd_chunk_data
             '"uidr"': uidr_chunk_data
             # '"vpat"': vpat_chunk_data
@@ -1380,6 +1383,18 @@ types:
         0x90: page
         0x98: layer
 
+  # ptrt_chunk_data:
+  #   seq:
+  #     - id: groups
+  #       size: 4
+  #       repeat: expr
+  #       repeat-expr: 4
+
+  usdn_chunk_data:
+    seq:
+      - id: static_id
+        type: u4
+
   mcfg_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2190
     # mostly reverse-engineered from generated files using CorelDRAW 9
@@ -1567,13 +1582,32 @@ types:
   # iccd_chunk_data: {}
   bbox_chunk_data:
     seq:
-      - id: x0
+      - id: p0_x
         type: coord
-      - id: y0
+      - id: p0_y
         type: coord
-      - id: x1
+      - id: p1_x
         type: coord
-      - id: y1
+      - id: p1_y
+        type: coord
+  obbx_chunk_data:
+    seq:
+      - id: p0_x
+        type: coord
+      - id: p0_y
+        type: coord
+      - id: p1_x
+        type: coord
+      - id: p1_y
+        type: coord
+
+      - id: p2_x
+        type: coord
+      - id: p2_y
+        type: coord
+      - id: p3_x
+        type: coord
+      - id: p3_y
         type: coord
   # spnd_chunk_data: {}
   uidr_chunk_data:
