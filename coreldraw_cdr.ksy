@@ -964,8 +964,8 @@ types:
 
   outl_chunk_data:
     seq:
-      - id: line_id
-        type: u4
+      - id: outl_id
+        size: 4
       - id: skips
         if: _root.version >= 1300
         type: skip
