@@ -1376,6 +1376,7 @@ types:
     enums:
       # https://sourceforge.net/p/uniconvertor/code/145/tree/formats/CDR/cdr_explorer/src/chunks.py#l490
       layer_types:
+        0x00: layer
         0x08: desktop
         0x0a: guides
         0x1a: grid
