@@ -173,7 +173,6 @@ types:
           cases:
             '"LIST"': list_chunk_data
             _: chunk_data_common(_parent._parent.chunk_id)
-        size-eos: true
   chunk_comp:
     -webide-representation: '{chunk_id}'
     params:
@@ -208,6 +207,7 @@ types:
         type: str
     seq:
       - id: body
+        size-eos: true
         type:
           switch-on: chunk_id
           cases:
@@ -220,24 +220,23 @@ types:
             '"outl"': outl_chunk_data
             '"fild"': fild_chunk_data
             '"fill"': fild_chunk_data
-            '"arrw"': arrw_chunk_data
+            # '"arrw"': arrw_chunk_data
             '"flgs"': flgs_chunk_data
             '"mcfg"': mcfg_chunk_data
             '"bmp "': bmp_chunk_data
-            '"bmpf"': bmpf_chunk_data
-            '"ppdt"': ppdt_chunk_data
-            '"ftil"': ftil_chunk_data
-            '"iccd"': iccd_chunk_data
+            # '"bmpf"': bmpf_chunk_data
+            # '"ppdt"': ppdt_chunk_data
+            # '"ftil"': ftil_chunk_data
+            # '"iccd"': iccd_chunk_data
             '"bbox"': bbox_chunk_data
-            '"spnd"': spnd_chunk_data
+            # '"spnd"': spnd_chunk_data
             '"uidr"': uidr_chunk_data
-            '"vpat"': vpat_chunk_data
-            '"font"': font_chunk_data
+            # '"vpat"': vpat_chunk_data
+            # '"font"': font_chunk_data
             '"stlt"': stlt_chunk_data
-            '"txsm"': txsm_chunk_data
-            '"udta"': udta_chunk_data
-            '"styd"': styd_chunk_data
-            _: not_supported
+            # '"txsm"': txsm_chunk_data
+            # '"udta"': udta_chunk_data
+            # '"styd"': styd_chunk_data
 
   fver_chunk_data:
     seq:
@@ -1347,7 +1346,7 @@ types:
               lookahead:
                 pos: _io.pos
                 type: u4
-  arrw_chunk_data: {}
+  # arrw_chunk_data: {}
   flgs_chunk_data:
     seq:
       - id: flags
@@ -1559,10 +1558,10 @@ types:
               color_value:
                  value: 'b | (g << 8) | (r << 16)'
 
-  bmpf_chunk_data: {}
-  ppdt_chunk_data: {}
-  ftil_chunk_data: {}
-  iccd_chunk_data: {}
+  # bmpf_chunk_data: {}
+  # ppdt_chunk_data: {}
+  # ftil_chunk_data: {}
+  # iccd_chunk_data: {}
   bbox_chunk_data:
     seq:
       - id: x0
@@ -1573,7 +1572,7 @@ types:
         type: coord
       - id: y1
         type: coord
-  spnd_chunk_data: {}
+  # spnd_chunk_data: {}
   uidr_chunk_data:
     seq:
       - id: color_id
@@ -1584,8 +1583,8 @@ types:
         size: 36
       - id: color
         type: color
-  vpat_chunk_data: {}
-  font_chunk_data: {}
+  # vpat_chunk_data: {}
+  # font_chunk_data: {}
   stlt_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2194
     seq:
@@ -1794,9 +1793,9 @@ types:
           - size: |
               (num > 1 ? sizeof<u4> * 4 + (_parent.mapping_section.has_set11s ? sizeof<u4> : 0) : 0) +
               (num > 2 ? sizeof<u4> * 5 : 0)
-  txsm_chunk_data: {}
-  udta_chunk_data: {}
-  styd_chunk_data: {}
+  # txsm_chunk_data: {}
+  # udta_chunk_data: {}
+  # styd_chunk_data: {}
 
   cmpr_special_chunk:
     seq:
@@ -2304,5 +2303,3 @@ types:
             - cdrSVGPalette
             - SVGColor # file name (SVGColor.xml)
           doc: SVG Colors
-
-  not_supported: {}
