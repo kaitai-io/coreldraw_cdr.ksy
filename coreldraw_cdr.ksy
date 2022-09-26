@@ -1784,9 +1784,21 @@ types:
           - id: parent_id
             type: u4
           - size: 8
-          - id: len_name
+          - id: char_len_name
             type: u4
-          - size: 'len_name * (_root.version >= 1200 ? 2 : 1)'
+          - id: name_old
+            size: char_len_name * 1
+            type: strz
+             # not accurate, but best we can do here (in fact, it reflects the
+             # https://en.wikipedia.org/wiki/Windows_code_page#ANSI_code_page
+             # based on the currently set system locale, at least on Windows)
+            encoding: windows-1252
+            if: _root.version < 1200
+          - id: name_new
+            size: char_len_name * 2
+            type: str
+            encoding: UTF-16LE
+            if: _root.version >= 1200
           - id: fill_id
             type: u4
           - id: outl_id
@@ -1796,6 +1808,9 @@ types:
           - size: |
               (num > 1 ? sizeof<u4> * 4 + (_parent.mapping_section.has_set11s ? sizeof<u4> : 0) : 0) +
               (num > 2 ? sizeof<u4> * 5 : 0)
+        instances:
+          name:
+            value: '_root.version >= 1200 ? name_new : name_old'
   # txsm_chunk_data: {}
   # udta_chunk_data: {}
   # styd_chunk_data: {}
