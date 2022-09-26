@@ -1136,6 +1136,8 @@ types:
             seq:
               # Byte size of one `stop` entry in each CDR version for which I
               # had sample files with gradients:
+              #   CDR 500: 14
+              #   CDR 600: 16
               #   CDR 1200: 16
               #   CDR 1300: 24 (analysis: `16 + 8 = 16 + (5 + 3)`)
               #   CDR 1400: 24
@@ -1167,6 +1169,7 @@ types:
               - size: 0
                 valid:
                   expr: |
+                    _root.version < 600 ? 14 :
                     _io.pos - ofs_start == [16, 24, 24, 45][
                       [
                         [0, (_root.version - 1200) / 100].max,
