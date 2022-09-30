@@ -218,8 +218,8 @@ types:
             '"vrsn"': vrsn_chunk_data
             '"trfd"': trfd_chunk_data
             '"outl"': outl_chunk_data
-            '"fild"': fild_chunk_data
-            '"fill"': fild_chunk_data
+            '"fild"': fild_chunk_data # since CDR 700: `_root.version >= 700`
+            '"fill"': fild_chunk_data # before CDR 700: `_root.version < 700`
             # '"arrw"': arrw_chunk_data
             '"flgs"': flgs_chunk_data
             # '"ptrt"': ptrt_chunk_data
@@ -651,11 +651,6 @@ types:
             type: coord
           - id: height
             type: coord
-      guid:
-        -webide-representation: "{value:uuid=ms}"
-        seq:
-          - id: value
-            size: 16
 
       spline: {}
       rectangle:
@@ -1037,28 +1032,277 @@ types:
     seq:
       - id: fill_id
         size: 4
-      - id: unknown
+      - id: since_version
+        type: u4
+        valid: 1300
         if: _root.version >= 1300
-        size: 8
+      - id: len_body
+        type: u4
+        valid:
+          min: fill_type._sizeof
+        if: _root.version >= 1300
       - id: fill_type
         type: u2
-      - id: style
+        enum: fill_types
+      - id: fill
+        size: '_root.version >= 1300 ? len_body - fill_type._sizeof : _io.size - _io.pos'
         type:
           switch-on: fill_type
           cases:
-            1: solid
-            2: gradient
-            7: pattern
-            9: image_fill_data # bitmap
-            10: image_fill_data # full color
-            11: texture
+            fill_types::uniform: solid
+            fill_types::fountain: gradient
+            # 7: pattern
+            # 9: image_fill_data # bitmap
+            # 10: image_fill_data # full color
+            # 11: texture
+      - id: fild_rest
+        size-eos: true
+        valid:
+          any-of:
+            - '[].as<bytes>'
+            - '[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]'
+
+    enums:
+      # CorelDRAW 7: PROGRAMS/DRAW_SCR.HLP 'GetFillType'
+      # CorelDRAW 9: Programs/Draw_scr.hlp 'GetFillType'
+      # ~~CorelDRAW 10: Programs/DRAW10VBA.HLP 'cdrFillType'~~: WRONG!
+      #    -> those are not the values that actually get stored in .cdr files,
+      #       even new versions (tested in CorelDRAW X7) use the "old" values
+      # ~~<https://community.coreldraw.com/sdk/api/draw/17/e/cdrfilltype>~~: WRONG as well!
+      fill_types:
+        0:
+          id: none
+          -orig-id: DRAW_FILL_NONE # CorelDRAW 9: Draw/Scripts/Scripts/drwconst.csi
+        1:
+          id: uniform
+          -orig-id: DRAW_FILL_UNIFORM
+        2:
+          id: fountain
+          -orig-id: DRAW_FILL_FOUNTAIN
+        6:
+          id: postscript
+          -orig-id: DRAW_FILL_POSTSCRIPT
+        7:
+          id: two_color_i7
+          -orig-id: DRAW_FILL_TWO_COLOR
+          doc: |
+            used in older versions of CorelDRAW (e.g. CorelDRAW 10)
+        8:
+          id: two_color_i8
+          doc: |
+            used for newly applied "Two-color pattern fill" in recent versions
+            of CorelDRAW (e.g. CorelDRAW X7)
+        9:
+          id: color_bitmap
+          -orig-id: DRAW_FILL_COLOR_BITMAP
+        10:
+          id: vector
+          -orig-id: DRAW_FILL_COLOR_VECTOR
+        11:
+          id: texture
+          -orig-id: DRAW_FILL_COLOR_TEXTURE
+
     types:
       solid:
         seq:
-          - id: unknown
-            size: '_root.version >= 1300 ? 13 : 2'
-          - id: color
-            type: color
+          - id: unknown1
+            size: 2
+            if: _root.version < 1300
+          - id: since_version
+            type: u4
+            valid: 1300
+            if: _root.version >= 1300
+          - id: len_properties
+            type: u4
+            if: _root.version >= 1300
+          - id: properties
+            size: '_root.version >= 1300 ? len_properties : _io.size - _io.pos'
+            type: property_list
+          - id: solid_rest
+            size-eos: true
+            valid:
+              any-of:
+                - '[].as<bytes>'
+                - '[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]'
+        types:
+          property_list:
+            seq:
+              - id: color_old
+                type: color
+                if: _root.version < 1300
+              - id: items
+                type: property
+                repeat: until
+                repeat-until: _.type == property_type::end
+                if: _root.version >= 1300
+              - id: unknown1
+                type: u2
+                valid:
+                  any-of:
+                    - 0 # usual value
+                    - 36 # CorelDRAW 7: TUTORS/DRAW/FISHEYE.CDR
+              - id: unknown_id
+                size: 2
+                if: _root.version >= 600
+              - id: overprint_raw
+                type:
+                  switch-on: _root.precision_16bit
+                  cases:
+                    true: u2
+                    _: u4
+                valid:
+                  any-of:
+                    - 0
+                    - 1 # CorelDRAW 7: DRAW/SAMPLES/{7EFFECTS.CDR,CAMERA.CDR}, CorelDRAW 8: DRAW/SAMPLES/CAMERA.CDR
+                    - 13 # CorelDRAW 7: TUTORS/DRAW/FISHEYE.CDR
+                doc: |
+                  see <https://community.coreldraw.com/talk/coreldraw_graphics_suite_x5/f/coreldraw-x5/37492/coreldraw-x5-icons-inside-color-indicator-what-do-they-mean>
+                  for how this is displayed in CorelDRAW
+              - id: unknown_angle
+                type: angle
+                valid:
+                  expr: |
+                    _.value_deg == 45.0
+                    or _.value_deg == 10.0
+                    or _.value_deg == 0.0
+                    or _.value_deg == 0.0001
+                doc: |
+                  seen values:
+
+                  * 45.0 - usual value (by far the most common),
+                  * 10.0 - CorelDRAW 7: DRAW/SAMPLES/WISHLIST.CDR,
+                  * 0.0:
+                    - CorelDRAW 7: DRAW/SAMPLES/CAMERA.CDR
+                    - CorelDRAW 8: DRAW/SAMPLES/{CAMERA.CDR,DRAW QUICK REF.CDR}
+                    - CorelDRAW 8: TUTORS/DRAW/HTMLDOCS/HTMLPICS/{CALENDAR.CDR,DRTUT5_COLOR_STYLES.CDR}
+                    - CorelDRAW 9: Draw/Samples/Layout.cdr
+                    - CorelDRAW 11: Draw/Samples/Sample1.cdr
+                  * 0.0001 (`64 00 00 00` or 100 raw) - CorelDRAW 7: TUTORS/DRAW/FISHEYE.CDR
+              - id: unknown4
+                type: u4
+                valid:
+                  any-of:
+                    - 60 # usual value
+                    - 0
+                    - 100 # CorelDRAW 7: DRAW/SAMPLES/COLORSTY/*.CDR (not all, but 45 out of 85 files)
+                    - 44 # CorelDRAW 7: TUTORS/DRAW/FISHEYE.CDR
+            instances:
+              overprint:
+                value: overprint_raw != 0
+
+          property:
+            seq:
+              - id: type
+                type: u1
+                enum: property_type
+              - id: len_body
+                type: u4
+                valid:
+                  eq: |
+                    type == property_type::color
+                      ? 12 :
+                    type == property_type::palette_guid
+                      ? 16 :
+                    type == property_type::end
+                      ? 0 :
+                      len_body
+              - id: body
+                size: len_body
+                type:
+                  switch-on: type
+                  cases:
+                    property_type::color: color
+                    property_type::special_color_lab: color
+                    property_type::palette_guid: guid
+                    property_type::special_palette_color_part1: special_palette_color_part1
+                    property_type::special_palette_color_part2: special_palette_color_part2
+                    property_type::special_palette_color_id: palette_color_id
+                    property_type::special_palette_color_name: palette_color_name
+                if: type != property_type::end
+          palette_color_id:
+            seq:
+              - id: id
+                type: u2
+              - id: rest
+                size-eos: true
+                valid:
+                  eq: '[].as<bytes>'
+          palette_color_name:
+            seq:
+              - id: name
+                type: color_name
+              - id: rest
+                size-eos: true
+                valid:
+                  eq: '[].as<bytes>'
+          special_palette_color_part1:
+            seq:
+              - id: palette_guid
+                type: guid
+              - id: name
+                type: color_name
+              - id: special_pal_p1_rest
+                size-eos: true
+          special_palette_color_part2:
+            seq:
+              # this `name_raw` is actually null-terminated, unlike the others
+              - id: name_raw
+                type: color_name
+              - id: special_pal_p2_rest
+                size-eos: true
+            instances:
+              name:
+                # assumes `_root.version >= 1200`
+                value: |
+                  name_raw.name.substring(name_raw.name.length - 1, name_raw.name.length) == [0x00, 0x00].to_s('UTF-16LE')
+                    ? name_raw.name.substring(0, name_raw.name.length - 1)
+                    : name_raw.name
+          color_name:
+            seq:
+              - id: char_len_name
+                type: u4
+              - id: name
+                size: char_len_name * 2
+                type: str
+                encoding: UTF-16LE
+        enums:
+          property_type:
+            0x00: end
+            0x01: color
+            0x03: special_palette_color_part2
+            0x06:
+              id: special_color_lab
+              doc: |
+                in addition to `property_type::color` which may for example use
+                `color_model::cmyk100_i21`, this appears only for "special palette" colors
+                (together with `property_type::special_palette_color_id` and
+                `property_type::special_palette_color`) and uses `color_model::lab_i18`
+                (at least in samples I've seen).
+
+                This kind of makes sense because CMYK (or whatever `property_type::color`
+                uses, which is also present) is a device-dependent color model, whereas
+                L*a*b* (stored in this property) is device-independent (so it's not
+                redundant to include both).
+            0x07:
+              id: palette_guid
+              doc: |
+                the set of used values is shared among colors and files (i.e. this GUID is
+                *not* randomly generated, but reused), the most common are 16 zero bytes
+                (`00000000-0000-0000-0000-000000000000`) which seem to be only used for
+                `color_palette::user`, followed by the second most common
+                `CB 19 CD CC 75 46 5E 4A 8B DA D0 BB BA AB 8A F0`
+                (`cccd19cb-4675-4a5e-8bda-d0bbbaab8af0`; if you search for this GUID [on
+                Google](https://www.google.com/search?q=cccd19cb-4675-4a5e-8bda-d0bbbaab8af0),
+                you actually get some results, which is interesting) only used for
+                `color_palette::user` colors using the CMYK color model
+                (`color_model::cmyk100_i2` or `color_model::cmyk255_i3`).
+
+                You can also find `74 CD 6C FC A8 10 52 41 89 01 A5 1F AC B4 77 85`
+                (`fc6ccd74-10a8-4152-8901-a51facb47785`) in a few sample files, only used
+                for `color_model::spot` colors with `color_palette::pantone_coated`.
+            0x08: special_palette_color_part1
+            0x0b: special_palette_color_id
+            0x0c: special_palette_color_name
       gradient:
         seq:
           - id: unknown1
@@ -1910,6 +2154,11 @@ types:
       because the entire array of sizes was copied into each chunk in the dump,
       since it had to be passed to all chunks as a parameter.
 
+  guid:
+    -webide-representation: "{value:uuid=ms}"
+    seq:
+      - id: value
+        size: 16
   coord:
     seq:
       - id: raw
@@ -2065,30 +2314,18 @@ types:
     types:
       color_new:
         seq:
-          - id: color_model_raw
+          - id: color_model
             type: u2
-          - id: color_palette_raw
-            if: 'color_model_raw != 0x1e'
+            enum: color_model
+          - id: color_palette
             type: u2
+            enum: color_palette
           - id: unknown
-            if: 'color_model_raw != 0x1e'
             size: 4
           - id: color_value
             type: u1
             repeat: expr
             repeat-expr: 4
-        instances:
-          color_model:
-            value: |
-              (_root.version >= 1300 and color_model_raw == 0x01) ? 0x19
-                : color_model_raw == 0x1e ? 0x19
-                  : color_model_raw
-            enum: color_model
-          color_palette:
-            value: |
-              color_model_raw == 0x1e ? 0x1e
-                : color_palette_raw
-            enum: color_palette
       color_middle:
         seq:
           - id: color_model
@@ -2119,7 +2356,7 @@ types:
     enums:
       # https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRCollector.cpp#L336-L582
       # https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_const.py#L62-L82
-      # https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype?lang=cli
+      # https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
       color_model:
         1: pantone
         2: cmyk100_i2
@@ -2143,19 +2380,19 @@ types:
         21: cmyk100_i21
         22:
           id: user_ink
-          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype?lang=cli
+          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
         25: spot
         26:
           id: multi_channel
-          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype?lang=cli
+          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
         99:
           id: mixed
-          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype?lang=cli
+          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
       # CorelDRAW 9: Programs/Draw_scr.hlp, Programs/Data/*.{cpl,pcp}
       # CorelDRAW 10: Programs/DRAW10VBA.HLP, Programs/Data/*.cpl
       # CorelDRAW 11: Programs/DRAW11VBA.HLP, Programs/Data/*.cpl
       # CorelDRAW X7:
-      #   - https://community.coreldraw.com/sdk/api/draw/17/e/cdrpaletteid?lang=cli
+      #   - https://community.coreldraw.com/sdk/api/draw/17/e/cdrpaletteid
       #   - Color/Palettes/**/*.xml
       color_palette:
         0: custom
