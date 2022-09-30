@@ -1854,6 +1854,10 @@ types:
   # ftil_chunk_data: {}
   # iccd_chunk_data: {}
   bbox_chunk_data:
+    doc: |
+      bounding box -
+      [Shape.GetBoundingBox(,False)](https://community.coreldraw.com/sdk/api/draw/17/m/shape.getboundingbox)
+    doc-ref: https://lists.inkscape.org/hyperkitty/list/inkscape-devel@lists.inkscape.org/message/JQYOMLQFCDEDHVDWZ5WDM7QBDFUFJXVD/attachment/2/cdr2svg.py.bz2
     seq:
       - id: p0_x
         type: coord
@@ -1864,6 +1868,10 @@ types:
       - id: p1_y
         type: coord
   obbx_chunk_data:
+    doc: |
+      outline bounding box -
+      [Shape.GetBoundingBox(,True)](https://community.coreldraw.com/sdk/api/draw/17/m/shape.getboundingbox)
+    doc-ref: https://lists.inkscape.org/hyperkitty/list/inkscape-devel@lists.inkscape.org/message/JQYOMLQFCDEDHVDWZ5WDM7QBDFUFJXVD/attachment/2/cdr2svg.py.bz2
     seq:
       - id: p0_x
         type: coord
