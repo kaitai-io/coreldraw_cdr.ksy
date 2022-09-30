@@ -1639,9 +1639,34 @@ types:
   #       repeat-expr: 4
 
   usdn_chunk_data:
+    doc: |
+      'usdn' = *U*nique *S*tatic i*D*e*N*tifier (probably)
     seq:
       - id: static_id
+        -orig-id:
+          - CDRStaticID # CorelDRAW 10: "Tools > Object Data Manager"
+          - StaticID # https://community.coreldraw.com/sdk/api/draw/17/p/shape.staticid
         type: u4
+        doc: |
+          CorelDRAW 10 displays this field under the name `CDRStaticID` in
+          "Tools > Object Data Manager". In CorelDRAW X7, it is hidden (no
+          longer visible in Object Data Manager) but still used, as explained at
+          <https://product.corel.com/help/CorelDRAW/540223850/Main/EN/Documentation/wwhelp/wwhimpl/js/html/wwhelp.htm#href=CorelDRAW-Setting-up-the-project-database.html>:
+
+          > By default, CorelDRAW creates four data fields: **Name**, **Cost**,
+          **Comments**, and **CDRStaticID**. The first three fields can be
+          edited or deleted as required. The **CDRStaticID** field is hidden; it
+          is used by CorelDRAW to identify objects, and it can't be edited or
+          deleted.
+
+          At the moment I don't know exactly from which version of CorelDRAW it
+          is hidden (just that it was visible in CorelDRAW 10 and hidden in X7)
+          or if there is another place where it can be displayed in recent
+          versions.
+
+          Nevertheless, it's accessible to macros as `Shape.StaticID`:
+          <https://community.coreldraw.com/sdk/api/draw/17/p/shape.staticid>
+          (so you can at least write a simple macro to show it)
 
   mcfg_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2190
