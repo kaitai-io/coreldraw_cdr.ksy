@@ -293,7 +293,7 @@ types:
         size: 4
       - id: chunks
         type:
-          switch-on: form_type
+          switch-on: 'form_type == "stlt" and _root.version < 700 ? "" : form_type'
           cases:
             '"cmpr"': cmpr_special_chunk
             '"stlt"': stlt_chunk_data
@@ -309,7 +309,7 @@ types:
         size: 4
       - id: chunks
         type:
-          switch-on: form_type
+          switch-on: 'form_type == "stlt" and _root.version < 700 ? "" : form_type'
           cases:
             '"stlt"': stlt_chunk_data
             _: chunks_comp(block_lens)
