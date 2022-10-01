@@ -435,7 +435,7 @@ types:
             type: waldo_fill
             if: _root.version < 400
           - id: fill_id
-            size: 4
+            type: u4
             if: _root.version >= 400
         types:
           waldo_fill:
@@ -531,7 +531,7 @@ types:
             type: waldo_outl
             if: _root.version < 400
           - id: outl_id
-            size: 4
+            type: u4
             if: _root.version >= 400
         types:
           waldo_outl:
@@ -958,7 +958,7 @@ types:
   outl_chunk_data:
     seq:
       - id: outl_id
-        size: 4
+        type: u4
       - id: skips
         if: _root.version >= 1300
         type: skip
@@ -1029,7 +1029,7 @@ types:
   fild_chunk_data:
     seq:
       - id: fill_id
-        size: 4
+        type: u4
       - id: since_version
         type: u4
         valid: 1300
@@ -2043,7 +2043,7 @@ types:
             type: u4
           - size: 4
           - id: value
-            size: 4
+            type: u4
       font:
         seq:
           - id: id
