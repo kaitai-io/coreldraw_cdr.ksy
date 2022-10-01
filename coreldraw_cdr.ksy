@@ -1045,7 +1045,7 @@ types:
         type: u2
         enum: fill_types
       - id: fill
-        size: '_root.version >= 1300 ? len_body - fill_type._sizeof : _io.size - _io.pos'
+        size: '_root.version >= 1300 ? len_body.as<u4> - fill_type._sizeof : _io.size - _io.pos'
         type:
           switch-on: fill_type
           cases:
@@ -1116,7 +1116,7 @@ types:
             type: u4
             if: _root.version >= 1300
           - id: properties
-            size: '_root.version >= 1300 ? len_properties : _io.size - _io.pos'
+            size: '_root.version >= 1300 ? len_properties.as<u4> : _io.size - _io.pos'
             type: property_list
           - id: solid_rest
             size-eos: true
