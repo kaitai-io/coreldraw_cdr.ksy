@@ -20,9 +20,31 @@ doc: |
 
 doc-ref:
   - https://github.com/LibreOffice/libcdr/tree/master/src/lib
-  - https://github.com/sk1project/uniconvertor/blob/master/src/uc2/formats/cdr/cdr_model.py # better not rely on it, much simpler and dumber than libcdr
-  - https://github.com/photopea/CDR-specification # incomplete, for basic overview only
-  - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py # very old and incomplete, but maybe as a curiosity
+
+  # better not rely on it, much simpler and dumber than libcdr
+  - https://github.com/sk1project/uniconvertor/tree/master/src/uc2/formats/cdr
+
+  # incomplete, but specifies some chunks not found elsewhere
+  - https://sourceforge.net/p/uniconvertor/code/HEAD/tree/formats/CDR/cdr_explorer/src/chunks.py
+
+  # code isn't interesting, but there is a comment documenting previously
+  # unknown chunks and mapping them to
+  # https://community.coreldraw.com/sdk/api/draw equivalents
+  - https://lists.inkscape.org/hyperkitty/list/inkscape-devel@lists.inkscape.org/message/JQYOMLQFCDEDHVDWZ5WDM7QBDFUFJXVD/attachment/2/cdr2svg.py.bz2
+
+  # it might be a good idea to explore the official CorelDRAW API (and maybe
+  # even play with it and generate various sample files), because it's very
+  # likely that the properties available via the API will be projected into the
+  # resulting .cdr file (and reverse enginnering of generated .cdr files is
+  # easier when you know what to look for)
+  - https://community.coreldraw.com/sdk/api/draw
+
+  # focuses on CDR 4.0 only (which is a really old version), but many things
+  # remained the same for the new versions, so it may also help reveal something
+  - https://github.com/KDE/calligra/tree/filters-karbon-cdr/filters/karbon/cdr
+
+  # incomplete, for basic overview only
+  - https://github.com/photopea/CDR-specification
 params:
   - id: streams
     type: io[]
@@ -149,7 +171,6 @@ types:
           cases:
             '"LIST"': list_chunk_data
             _: chunk_data_common(_parent._parent.chunk_id)
-        size-eos: true
   chunk_comp:
     -webide-representation: '{chunk_id}'
     params:
@@ -184,6 +205,7 @@ types:
         type: str
     seq:
       - id: body
+        size-eos: true
         type:
           switch-on: chunk_id
           cases:
@@ -194,26 +216,28 @@ types:
             '"vrsn"': vrsn_chunk_data
             '"trfd"': trfd_chunk_data
             '"outl"': outl_chunk_data
-            '"fild"': fild_chunk_data
-            '"fill"': fild_chunk_data
-            '"arrw"': arrw_chunk_data
+            '"fild"': fild_chunk_data # since CDR 700: `_root.version >= 700`
+            '"fill"': fild_chunk_data # before CDR 700: `_root.version < 700`
+            # '"arrw"': arrw_chunk_data
             '"flgs"': flgs_chunk_data
+            # '"ptrt"': ptrt_chunk_data
+            '"usdn"': usdn_chunk_data
             '"mcfg"': mcfg_chunk_data
             '"bmp "': bmp_chunk_data
-            '"bmpf"': bmpf_chunk_data
-            '"ppdt"': ppdt_chunk_data
-            '"ftil"': ftil_chunk_data
-            '"iccd"': iccd_chunk_data
+            # '"bmpf"': bmpf_chunk_data
+            # '"ppdt"': ppdt_chunk_data
+            # '"ftil"': ftil_chunk_data
+            # '"iccd"': iccd_chunk_data
             '"bbox"': bbox_chunk_data
-            '"spnd"': spnd_chunk_data
+            '"obbx"': obbx_chunk_data
+            # '"spnd"': spnd_chunk_data
             '"uidr"': uidr_chunk_data
-            '"vpat"': vpat_chunk_data
-            '"font"': font_chunk_data
+            # '"vpat"': vpat_chunk_data
+            # '"font"': font_chunk_data
             '"stlt"': stlt_chunk_data
-            '"txsm"': txsm_chunk_data
-            '"udta"': udta_chunk_data
-            '"styd"': styd_chunk_data
-            _: not_supported
+            # '"txsm"': txsm_chunk_data
+            # '"udta"': udta_chunk_data
+            # '"styd"': styd_chunk_data
 
   fver_chunk_data:
     seq:
@@ -267,7 +291,7 @@ types:
         size: 4
       - id: chunks
         type:
-          switch-on: form_type
+          switch-on: 'form_type == "stlt" and _root.version < 700 ? "" : form_type'
           cases:
             '"cmpr"': cmpr_special_chunk
             '"stlt"': stlt_chunk_data
@@ -283,7 +307,7 @@ types:
         size: 4
       - id: chunks
         type:
-          switch-on: form_type
+          switch-on: 'form_type == "stlt" and _root.version < 700 ? "" : form_type'
           cases:
             '"stlt"': stlt_chunk_data
             _: chunks_comp(block_lens)
@@ -387,7 +411,7 @@ types:
                 'arg_type::polygon_transform': polygon_transform
                 'arg_type::opacity': opacity
                 'arg_type::page_size': page_size
-            # size-eos: true
+                'arg_type::guid_layer': guid
 
       loda_coords:
         seq:
@@ -411,8 +435,8 @@ types:
             type: waldo_fill
             if: _root.version < 400
           - id: fill_id
+            size: 4
             if: _root.version >= 400
-            type: u4
         types:
           waldo_fill:
             seq:
@@ -507,8 +531,8 @@ types:
             type: waldo_outl
             if: _root.version < 400
           - id: outl_id
+            size: 4
             if: _root.version >= 400
-            type: u4
         types:
           waldo_outl:
             seq:
@@ -560,20 +584,23 @@ types:
           - id: value_old
             size-eos: true
             type: strz
-            encoding: UTF-8 # TODO: verify
+             # not accurate, but best we can do here (in fact, it reflects the
+             # https://en.wikipedia.org/wiki/Windows_code_page#ANSI_code_page
+             # based on the currently set system locale, at least on Windows)
+            encoding: windows-1252
             if: _root.version < 1200
           - id: value_new
             size-eos: true
-            encoding: UTF-16LE
             # FIXME: should be `type: strz` but Kaitai Struct doesn't support it for
             # UTF-16 yet, see https://github.com/kaitai-io/kaitai_struct/issues/187
             type: str
+            encoding: UTF-16LE
             if: _root.version >= 1200
         instances:
           value:
-            # a poor man's workaround for `value_new` not being properly parsed as
-            # null-terminated (but I think it will in fact work fine for .cdr files
-            # generated by CorelDRAW)
+            # a poor man's workaround for `value_new` not being properly parsed
+            # as null-terminated (but I believe this actually works fine for
+            # .cdr files generated by CorelDRAW)
             value: |
               _root.version >= 1200 ? (
                 value_new.substring(value_new.length - 1, value_new.length) == [0x00, 0x00].to_s('UTF-16LE')
@@ -823,6 +850,17 @@ types:
         19130:
           id: page_size
           doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L1817-L1818
+        40050:
+          id: guid_layer
+          doc-ref: |
+            randomly generated for each layer (in fact, if you create two
+            identical empty CorelDRAW documents using the same steps and save
+            them into different .cdr files, these GUIDs would likely be the only
+            thing in which these .cdr files differ, and is also the reason why
+            they don't have exactly the same file size due to compression), in
+            particular for the "Guides", "Desktop" and "Document Grid" layers in
+            the master page which are then referenced in content pages via the
+            same GUID
       chunk_types:
         0x01: rectangle
         0x02: ellipse
@@ -919,8 +957,8 @@ types:
 
   outl_chunk_data:
     seq:
-      - id: line_id
-        type: u4
+      - id: outl_id
+        size: 4
       - id: skips
         if: _root.version >= 1300
         type: skip
@@ -991,29 +1029,279 @@ types:
   fild_chunk_data:
     seq:
       - id: fill_id
+        size: 4
+      - id: since_version
         type: u4
-      - id: unknown
+        valid: 1300
         if: _root.version >= 1300
-        size: 8
+      - id: len_body
+        type: u4
+        valid:
+          min: fill_type._sizeof
+        if: _root.version >= 1300
       - id: fill_type
         type: u2
-      - id: style
+        enum: fill_types
+      - id: fill
+        size: '_root.version >= 1300 ? len_body.as<u4> - fill_type._sizeof : _io.size - _io.pos'
         type:
           switch-on: fill_type
           cases:
-            1: solid
-            2: gradient
-            7: pattern
-            9: image_fill_data # bitmap
-            10: image_fill_data # full color
-            11: texture
+            fill_types::uniform: solid
+            fill_types::fountain: gradient
+            # 7: pattern
+            # 9: image_fill_data # bitmap
+            # 10: image_fill_data # full color
+            # 11: texture
+      - id: fild_rest
+        size-eos: true
+        valid:
+          any-of:
+            - '[].as<bytes>'
+            - '[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]'
+
+    enums:
+      # CorelDRAW 7: PROGRAMS/DRAW_SCR.HLP 'GetFillType'
+      # CorelDRAW 9: Programs/Draw_scr.hlp 'GetFillType'
+      # ~~CorelDRAW 10: Programs/DRAW10VBA.HLP 'cdrFillType'~~: WRONG!
+      #    -> those are not the values that actually get stored in .cdr files,
+      #       even new versions (tested in CorelDRAW X7) use the "old" values
+      # ~~<https://community.coreldraw.com/sdk/api/draw/17/e/cdrfilltype>~~: WRONG as well!
+      fill_types:
+        0:
+          id: none
+          -orig-id: DRAW_FILL_NONE # CorelDRAW 9: Draw/Scripts/Scripts/drwconst.csi
+        1:
+          id: uniform
+          -orig-id: DRAW_FILL_UNIFORM
+        2:
+          id: fountain
+          -orig-id: DRAW_FILL_FOUNTAIN
+        6:
+          id: postscript
+          -orig-id: DRAW_FILL_POSTSCRIPT
+        7:
+          id: two_color_i7
+          -orig-id: DRAW_FILL_TWO_COLOR
+          doc: |
+            used in older versions of CorelDRAW (e.g. CorelDRAW 10)
+        8:
+          id: two_color_i8
+          doc: |
+            used for newly applied "Two-color pattern fill" in recent versions
+            of CorelDRAW (e.g. CorelDRAW X7)
+        9:
+          id: color_bitmap
+          -orig-id: DRAW_FILL_COLOR_BITMAP
+        10:
+          id: vector
+          -orig-id: DRAW_FILL_COLOR_VECTOR
+        11:
+          id: texture
+          -orig-id: DRAW_FILL_COLOR_TEXTURE
+
     types:
       solid:
         seq:
-          - id: unknown
-            size: '_root.version >= 1300 ? 13 : 2'
-          - id: color
-            type: color
+          - id: unknown1
+            size: 2
+            if: _root.version < 1300
+          - id: since_version
+            type: u4
+            valid: 1300
+            if: _root.version >= 1300
+          - id: len_properties
+            type: u4
+            if: _root.version >= 1300
+          - id: properties
+            size: '_root.version >= 1300 ? len_properties.as<u4> : _io.size - _io.pos'
+            type: property_list
+          - id: solid_rest
+            size-eos: true
+            valid:
+              any-of:
+                - '[].as<bytes>'
+                - '[0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00]'
+        types:
+          property_list:
+            seq:
+              - id: color_old
+                type: color
+                if: _root.version < 1300
+              - id: items
+                type: property
+                repeat: until
+                repeat-until: _.type == property_type::end
+                if: _root.version >= 1300
+              - id: unknown1
+                type: u2
+                valid:
+                  any-of:
+                    - 0 # usual value
+                    - 36 # CorelDRAW 7: TUTORS/DRAW/FISHEYE.CDR
+                    - 127 # sample '22.cdr'
+              - id: unknown_id
+                size: 2
+                if: _root.version >= 600
+              - id: overprint_raw
+                type:
+                  switch-on: _root.precision_16bit
+                  cases:
+                    true: u2
+                    _: u4
+                valid:
+                  any-of:
+                    - 0
+                    - 1 # CorelDRAW 7: DRAW/SAMPLES/{7EFFECTS.CDR,CAMERA.CDR}, CorelDRAW 8: DRAW/SAMPLES/CAMERA.CDR
+                    - 13 # CorelDRAW 7: TUTORS/DRAW/FISHEYE.CDR
+                doc: |
+                  see <https://community.coreldraw.com/talk/coreldraw_graphics_suite_x5/f/coreldraw-x5/37492/coreldraw-x5-icons-inside-color-indicator-what-do-they-mean>
+                  for how this is displayed in CorelDRAW
+              - id: unknown_angle
+                type: angle
+                valid:
+                  expr: |
+                    _.value_deg == 45.0
+                    or _.value_deg == 10.0
+                    or _.value_deg == 0.0
+                    or _.value_deg == 0.0001
+                doc: |
+                  seen values:
+
+                  * 45.0 - usual value (by far the most common),
+                  * 10.0 - CorelDRAW 7: DRAW/SAMPLES/WISHLIST.CDR,
+                  * 0.0:
+                    - CorelDRAW 7: DRAW/SAMPLES/CAMERA.CDR
+                    - CorelDRAW 8: DRAW/SAMPLES/{CAMERA.CDR,DRAW QUICK REF.CDR}
+                    - CorelDRAW 8: TUTORS/DRAW/HTMLDOCS/HTMLPICS/{CALENDAR.CDR,DRTUT5_COLOR_STYLES.CDR}
+                    - CorelDRAW 9: Draw/Samples/Layout.cdr
+                    - CorelDRAW 11: Draw/Samples/Sample1.cdr
+                  * 0.0001 (`64 00 00 00` or 100 raw) - CorelDRAW 7: TUTORS/DRAW/FISHEYE.CDR
+              - id: unknown4
+                type: u4
+                valid:
+                  any-of:
+                    - 60 # usual value
+                    - 0
+                    - 100 # CorelDRAW 7: DRAW/SAMPLES/COLORSTY/*.CDR (not all, but 45 out of 85 files)
+                    - 44 # CorelDRAW 7: TUTORS/DRAW/FISHEYE.CDR
+            instances:
+              overprint:
+                value: overprint_raw != 0
+
+          property:
+            seq:
+              - id: type
+                type: u1
+                enum: property_type
+              - id: len_body
+                type: u4
+                valid:
+                  eq: |
+                    type == property_type::color
+                      ? 12 :
+                    type == property_type::palette_guid
+                      ? 16 :
+                    type == property_type::end
+                      ? 0 :
+                      len_body
+              - id: body
+                size: len_body
+                type:
+                  switch-on: type
+                  cases:
+                    property_type::color: color
+                    property_type::special_color_lab: color
+                    property_type::palette_guid: guid
+                    property_type::special_palette_color_part1: special_palette_color_part1
+                    property_type::special_palette_color_part2: special_palette_color_part2
+                    property_type::special_palette_color_id: palette_color_id
+                    property_type::special_palette_color_name: palette_color_name
+                if: type != property_type::end
+          palette_color_id:
+            seq:
+              - id: id
+                type: u2
+              - id: rest
+                size-eos: true
+                valid:
+                  eq: '[].as<bytes>'
+          palette_color_name:
+            seq:
+              - id: name
+                type: color_name
+              - id: rest
+                size-eos: true
+                valid:
+                  eq: '[].as<bytes>'
+          special_palette_color_part1:
+            seq:
+              - id: palette_guid
+                type: guid
+              - id: name
+                type: color_name
+              - id: special_pal_p1_rest
+                size-eos: true
+          special_palette_color_part2:
+            seq:
+              # this `name_raw` is actually null-terminated, unlike the others
+              - id: name_raw
+                type: color_name
+              - id: special_pal_p2_rest
+                size-eos: true
+            instances:
+              name:
+                # assumes `_root.version >= 1200`
+                value: |
+                  name_raw.name.substring(name_raw.name.length - 1, name_raw.name.length) == [0x00, 0x00].to_s('UTF-16LE')
+                    ? name_raw.name.substring(0, name_raw.name.length - 1)
+                    : name_raw.name
+          color_name:
+            seq:
+              - id: char_len_name
+                type: u4
+              - id: name
+                size: char_len_name * 2
+                type: str
+                encoding: UTF-16LE
+        enums:
+          property_type:
+            0x00: end
+            0x01: color
+            0x03: special_palette_color_part2
+            0x06:
+              id: special_color_lab
+              doc: |
+                in addition to `property_type::color` which may for example use
+                `color_model::cmyk100_i21`, this appears only for "special palette" colors
+                (together with `property_type::special_palette_color_id` and
+                `property_type::special_palette_color`) and uses `color_model::lab_i18`
+                (at least in samples I've seen).
+
+                This kind of makes sense because CMYK (or whatever `property_type::color`
+                uses, which is also present) is a device-dependent color model, whereas
+                L*a*b* (stored in this property) is device-independent (so it's not
+                redundant to include both).
+            0x07:
+              id: palette_guid
+              doc: |
+                the set of used values is shared among colors and files (i.e. this GUID is
+                *not* randomly generated, but reused), the most common are 16 zero bytes
+                (`00000000-0000-0000-0000-000000000000`) which seem to be only used for
+                `color_palette::user`, followed by the second most common
+                `CB 19 CD CC 75 46 5E 4A 8B DA D0 BB BA AB 8A F0`
+                (`cccd19cb-4675-4a5e-8bda-d0bbbaab8af0`; if you search for this GUID [on
+                Google](https://www.google.com/search?q=cccd19cb-4675-4a5e-8bda-d0bbbaab8af0),
+                you actually get some results, which is interesting) only used for
+                `color_palette::user` colors using the CMYK color model
+                (`color_model::cmyk100_i2` or `color_model::cmyk255_i3`).
+
+                You can also find `74 CD 6C FC A8 10 52 41 89 01 A5 1F AC B4 77 85`
+                (`fc6ccd74-10a8-4152-8901-a51facb47785`) in a few sample files, only used
+                for `color_model::spot` colors with `color_palette::pantone_coated`.
+            0x08: special_palette_color_part1
+            0x0b: special_palette_color_id
+            0x0c: special_palette_color_name
       gradient:
         seq:
           - id: unknown1
@@ -1091,6 +1379,8 @@ types:
             seq:
               # Byte size of one `stop` entry in each CDR version for which I
               # had sample files with gradients:
+              #   CDR 500: 14
+              #   CDR 600: 16
               #   CDR 1200: 16
               #   CDR 1300: 24 (analysis: `16 + 8 = 16 + (5 + 3)`)
               #   CDR 1400: 24
@@ -1122,12 +1412,15 @@ types:
               - size: 0
                 valid:
                   expr: |
-                    _io.pos - ofs_start == [16, 24, 24, 45][
-                      [
-                        [0, (_root.version - 1200) / 100].max,
-                        3
-                      ].min
-                    ]
+                    _io.pos - ofs_start == (
+                      _root.version < 600 ? 14 :
+                      [16, 24, 24, 45][
+                        [
+                          [0, (_root.version - 1200) / 100].max,
+                          3
+                        ].min
+                      ]
+                    )
             instances:
               ofs_start:
                 value: _io.pos
@@ -1307,7 +1600,7 @@ types:
               lookahead:
                 pos: _io.pos
                 type: u4
-  arrw_chunk_data: {}
+  # arrw_chunk_data: {}
   flgs_chunk_data:
     seq:
       - id: flags
@@ -1328,6 +1621,7 @@ types:
     enums:
       # https://sourceforge.net/p/uniconvertor/code/145/tree/formats/CDR/cdr_explorer/src/chunks.py#l490
       layer_types:
+        0x00: layer
         0x08: desktop
         0x0a: guides
         0x1a: grid
@@ -1337,6 +1631,43 @@ types:
         0x10: group
         0x90: page
         0x98: layer
+
+  # ptrt_chunk_data:
+  #   seq:
+  #     - id: groups
+  #       size: 4
+  #       repeat: expr
+  #       repeat-expr: 4
+
+  usdn_chunk_data:
+    doc: |
+      'usdn' = *U*nique *S*tatic i*D*e*N*tifier (probably)
+    seq:
+      - id: static_id
+        -orig-id:
+          - CDRStaticID # CorelDRAW 10: "Tools > Object Data Manager"
+          - StaticID # https://community.coreldraw.com/sdk/api/draw/17/p/shape.staticid
+        type: u4
+        doc: |
+          CorelDRAW 10 displays this field under the name `CDRStaticID` in
+          "Tools > Object Data Manager". In CorelDRAW X7, it is hidden (no
+          longer visible in Object Data Manager) but still used, as explained at
+          <https://product.corel.com/help/CorelDRAW/540223850/Main/EN/Documentation/wwhelp/wwhimpl/js/html/wwhelp.htm#href=CorelDRAW-Setting-up-the-project-database.html>:
+
+          > By default, CorelDRAW creates four data fields: **Name**, **Cost**,
+          **Comments**, and **CDRStaticID**. The first three fields can be
+          edited or deleted as required. The **CDRStaticID** field is hidden; it
+          is used by CorelDRAW to identify objects, and it can't be edited or
+          deleted.
+
+          At the moment I don't know exactly from which version of CorelDRAW it
+          is hidden (just that it was visible in CorelDRAW 10 and hidden in X7)
+          or if there is another place where it can be displayed in recent
+          versions.
+
+          Nevertheless, it's accessible to macros as `Shape.StaticID`:
+          <https://community.coreldraw.com/sdk/api/draw/17/p/shape.staticid>
+          (so you can at least write a simple macro to show it)
 
   mcfg_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L2190
@@ -1519,21 +1850,48 @@ types:
               color_value:
                  value: 'b | (g << 8) | (r << 16)'
 
-  bmpf_chunk_data: {}
-  ppdt_chunk_data: {}
-  ftil_chunk_data: {}
-  iccd_chunk_data: {}
+  # bmpf_chunk_data: {}
+  # ppdt_chunk_data: {}
+  # ftil_chunk_data: {}
+  # iccd_chunk_data: {}
   bbox_chunk_data:
+    doc: |
+      bounding box -
+      [Shape.GetBoundingBox(,False)](https://community.coreldraw.com/sdk/api/draw/17/m/shape.getboundingbox)
+    doc-ref: https://lists.inkscape.org/hyperkitty/list/inkscape-devel@lists.inkscape.org/message/JQYOMLQFCDEDHVDWZ5WDM7QBDFUFJXVD/attachment/2/cdr2svg.py.bz2
     seq:
-      - id: x0
+      - id: p0_x
         type: coord
-      - id: y0
+      - id: p0_y
         type: coord
-      - id: x1
+      - id: p1_x
         type: coord
-      - id: y1
+      - id: p1_y
         type: coord
-  spnd_chunk_data: {}
+  obbx_chunk_data:
+    doc: |
+      outline bounding box -
+      [Shape.GetBoundingBox(,True)](https://community.coreldraw.com/sdk/api/draw/17/m/shape.getboundingbox)
+    doc-ref: https://lists.inkscape.org/hyperkitty/list/inkscape-devel@lists.inkscape.org/message/JQYOMLQFCDEDHVDWZ5WDM7QBDFUFJXVD/attachment/2/cdr2svg.py.bz2
+    seq:
+      - id: p0_x
+        type: coord
+      - id: p0_y
+        type: coord
+      - id: p1_x
+        type: coord
+      - id: p1_y
+        type: coord
+
+      - id: p2_x
+        type: coord
+      - id: p2_y
+        type: coord
+      - id: p3_x
+        type: coord
+      - id: p3_y
+        type: coord
+  # spnd_chunk_data: {}
   uidr_chunk_data:
     seq:
       - id: color_id
@@ -1544,8 +1902,8 @@ types:
         size: 36
       - id: color
         type: color
-  vpat_chunk_data: {}
-  font_chunk_data: {}
+  # vpat_chunk_data: {}
+  # font_chunk_data: {}
   stlt_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2194
     seq:
@@ -1685,7 +2043,7 @@ types:
             type: u4
           - size: 4
           - id: value
-            type: u4
+            size: 4
       font:
         seq:
           - id: id
@@ -1742,9 +2100,21 @@ types:
           - id: parent_id
             type: u4
           - size: 8
-          - id: len_name
+          - id: char_len_name
             type: u4
-          - size: 'len_name * (_root.version >= 1200 ? 2 : 1)'
+          - id: name_old
+            size: char_len_name * 1
+            type: strz
+             # not accurate, but best we can do here (in fact, it reflects the
+             # https://en.wikipedia.org/wiki/Windows_code_page#ANSI_code_page
+             # based on the currently set system locale, at least on Windows)
+            encoding: windows-1252
+            if: _root.version < 1200
+          - id: name_new
+            size: char_len_name * 2
+            type: str
+            encoding: UTF-16LE
+            if: _root.version >= 1200
           - id: fill_id
             type: u4
           - id: outl_id
@@ -1754,9 +2124,12 @@ types:
           - size: |
               (num > 1 ? sizeof<u4> * 4 + (_parent.mapping_section.has_set11s ? sizeof<u4> : 0) : 0) +
               (num > 2 ? sizeof<u4> * 5 : 0)
-  txsm_chunk_data: {}
-  udta_chunk_data: {}
-  styd_chunk_data: {}
+        instances:
+          name:
+            value: '_root.version >= 1200 ? name_new : name_old'
+  # txsm_chunk_data: {}
+  # udta_chunk_data: {}
+  # styd_chunk_data: {}
 
   cmpr_special_chunk:
     seq:
@@ -1815,6 +2188,11 @@ types:
       because the entire array of sizes was copied into each chunk in the dump,
       since it had to be passed to all chunks as a parameter.
 
+  guid:
+    -webide-representation: "{value:uuid=ms}"
+    seq:
+      - id: value
+        size: 16
   coord:
     seq:
       - id: raw
@@ -1970,29 +2348,18 @@ types:
     types:
       color_new:
         seq:
-          - id: color_model_raw
+          - id: color_model
             type: u2
-          - id: color_palette_raw
-            if: 'color_model_raw != 0x1e'
+            enum: color_model
+          - id: color_palette
             type: u2
+            enum: color_palette
           - id: unknown
-            if: 'color_model_raw != 0x1e'
             size: 4
           - id: color_value
             type: u1
             repeat: expr
             repeat-expr: 4
-        instances:
-          color_model:
-            value: >-
-                    (_root.version >= 1300 and color_model_raw == 0x01) ? 0x19
-                      : color_model_raw == 0x1e ? 0x19
-                        : color_model_raw
-            enum: color_model
-          color_palette:
-            value: >-
-                    color_model_raw == 0x1e ? 0x1e
-                      : color_palette_raw
       color_middle:
         seq:
           - id: color_model
@@ -2023,10 +2390,11 @@ types:
     enums:
       # https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRCollector.cpp#L336-L582
       # https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_const.py#L62-L82
+      # https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
       color_model:
-        1: cmyk100_a
-        2: cmyk100_b
-        3: cmyk255_a
+        1: pantone
+        2: cmyk100_i2
+        3: cmyk255_i3
         4: cmy
         5: rgb
         6: hsb
@@ -2034,10 +2402,231 @@ types:
         8: bw
         9: grayscale
         11: yiq255
-        12: lab
-        17: cmyk255_b
-        18: lab2
+        12: lab_i12
+        14: pantone_hex
+        15:
+          id: hexachrome
+          doc-ref: CorelDRAW 9 Draw_scr.hlp
+          doc: no longer present in CorelDRAW 10 DRAW10VBA.HLP
+        17: cmyk255_i17
+        18: lab_i18
         20: registration
-        21: cmyk100_c
+        21: cmyk100_i21
+        22:
+          id: user_ink
+          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
         25: spot
-  not_supported: {}
+        26:
+          id: multi_channel
+          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
+        99:
+          id: mixed
+          doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
+      # CorelDRAW 9: Programs/Draw_scr.hlp, Programs/Data/*.{cpl,pcp}
+      # CorelDRAW 10: Programs/DRAW10VBA.HLP, Programs/Data/*.cpl
+      # CorelDRAW 11: Programs/DRAW11VBA.HLP, Programs/Data/*.cpl
+      # CorelDRAW X7:
+      #   - https://community.coreldraw.com/sdk/api/draw/17/e/cdrpaletteid
+      #   - Color/Palettes/**/*.xml
+      color_palette:
+        0: custom
+        1:
+          id: trumatch
+          doc: TRUMATCH Colors # palette name
+        2:
+          id: pantone_process
+          -orig-id:
+            - PANTONE PROCESS # CorelDRAW 9 Draw_scr.hlp
+            - pantone # palette file name (without the .cpl/.xml extension)
+          doc: PANTONE(r) process coated
+        3:
+          id: pantone_corel8
+          -orig-id:
+            - PANTONE SPOT # CorelDRAW 9 Draw_scr.hlp
+            - cdrPANTONECorel8 # CorelDRAW 10 DRAW10VBA.HLP
+            - pantone8
+          doc: PANTONE MATCHING SYSTEM - Corel 8
+        4:
+          id: image
+          -orig-id: IMAGE # CorelDRAW 9 Draw_scr.hlp, no longer in CorelDRAW 10 DRAW10VBA.HLP
+        5:
+          id: user
+          -orig-id: USER # CorelDRAW 9 Draw_scr.hlp, no longer in CorelDRAW 10 DRAW10VBA.HLP
+        6:
+          id: custom_fixed
+          -orig-id: CUSTOMFIXED # CorelDRAW 9 Draw_scr.hlp, no longer in CorelDRAW 10 DRAW10VBA.HLP
+        7:
+          id: uniform
+          -orig-id:
+            - RGBSTANDARD # CorelDRAW 9 Draw_scr.hlp
+            - cdrUniform # CorelDRAW 10 DRAW10VBA.HLP
+            - rgbstd
+          doc: Uniform Colors
+        8:
+          id: focoltone
+          -orig-id:
+            - focolton
+          doc: FOCOLTONE Colors
+        9:
+          id: spectra_master
+          -orig-id:
+            - DUPONT # CorelDRAW 9 Draw_scr.hlp
+            - cdrSpectraMaster # CorelDRAW 10 DRAW10VBA.HLP
+            - dupont
+          doc: SpectraMaster(r) Colors
+        10:
+          id: toyo
+          doc: TOYO COLOR FINDER
+        11:
+          id: dic
+          doc: DIC Colors
+        12:
+          id: pantone_hex_coated_corel10
+          -orig-id:
+            - cdrPANTONEHexCoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panhexc
+          doc: PANTONE Hexachrome Coated - Corel 10
+        13:
+          id: lab
+          -orig-id:
+            - labpal
+          doc: Lab Colors
+        14:
+          id: netscape
+          -orig-id:
+            - NETSCAPE # CorelDRAW 9 Draw_scr.hlp
+            - cdrNetscapeNavigator # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - netscape # netscape.cpl is present in CorelDRAW 9, but not anymore in CorelDRAW 10
+        15:
+          id: explorer
+          -orig-id:
+            - EXPLORER # CorelDRAW 9 Draw_scr.hlp
+            - cdrInternetExplorer # CorelDRAW 10 DRAW10VBA.HLP
+            - explorer # explorer.cpl is present in CorelDRAW 9, but not anymore in CorelDRAW 10
+          doc: no longer present in CorelDRAW 11 DRAW11VBA.HLP
+        16: user_inks
+        17:
+          id: pantone_coated_corel10
+          -orig-id:
+            - cdrPANTONECoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panguidc
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L2348
+          doc: PANTONE MATCHING SYSTEM Coated - Corel 10
+        18:
+          id: pantone_uncoated_corel10
+          -orig-id:
+            - cdrPANTONEUncoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panguidu
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L2630
+          doc: PANTONE MATCHING SYSTEM Uncoated - Corel 10
+        20:
+          id: pantone_metallic_corel10
+          -orig-id:
+            - cdrPANTONEMetallic # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panmetlu
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L2912
+          doc: PANTONE Metallic Colors Unvarnished - Corel 10
+        21:
+          id: pantone_pastel_coated_corel10
+          -orig-id:
+            - cdrPANTONEPastelCoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panpastc
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L2982
+          doc: PANTONE Pastel Colors Coated - Corel 10
+        22:
+          id: pantone_pastel_uncoated_corel10
+          -orig-id:
+            - cdrPANTONEPastelUncoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panpastu
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L3032
+          doc: PANTONE Pastel Colors Uncoated - Corel 10
+        23:
+          id: hks
+          -orig-id: HKS(r) Colors
+        24:
+          id: pantone_hex_uncoated_corel10
+          -orig-id:
+            - cdrPANTONEHexUncoated # CorelDRAW 10 DRAW10VBA.HLP, no longer in CorelDRAW 11 DRAW11VBA.HLP
+            - panhexu
+          doc: PANTONE Hexachrome Uncoated - Corel 10
+        25:
+          id: web_safe
+          -orig-id:
+            - WebSafe # file name
+          doc: Web-safe Colors
+        26:
+          id: hks_k
+          -orig-id:
+            - HKS_K # file name
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L3960
+        27:
+          id: hks_n
+          -orig-id:
+            - HKS_N # file name
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L4002
+        28:
+          id: hks_z
+          -orig-id:
+            - HKS_Z # file name
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L4044
+        29:
+          id: hks_e
+          -orig-id:
+            - HKS_E # file name
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRColorPalettes.h#L4086
+        30:
+          id: pantone_metallic
+          -orig-id:
+            - panmetlc
+          doc: PANTONE(r) metallic coated
+        31:
+          id: pantone_pastel_coated
+          -orig-id:
+            - panpasc
+          doc: PANTONE(r) pastel coated
+        32:
+          id: pantone_pastel_uncoated
+          -orig-id:
+            - panpasu
+          doc: PANTONE(r) pastel uncoated
+        33:
+          id: pantone_hex_coated
+          -orig-id:
+            - panhexac
+          doc: PANTONE(r) hexachrome(r) coated
+        34:
+          id: pantone_hex_uncoated
+          -orig-id:
+            - PANTONE(r) hexachrome(r) uncoated
+            - panhexau
+        35:
+          id: pantone_matte
+          -orig-id:
+            - pantonem
+          doc: PANTONE(r) solid matte
+        36:
+          id: pantone_coated
+          -orig-id:
+            - pantonec
+          doc: PANTONE(r) solid coated
+        37:
+          id: pantone_uncoated
+          -orig-id:
+            - pantoneu
+          doc: PANTONE(r) solid uncoated
+        38:
+          id: pantone_process_coated_euro
+          -orig-id:
+            - paneuroc
+          doc: PANTONE(r) process coated EURO
+        39:
+          id: pantone_solid2process_euro
+          -orig-id:
+            - pans2pec
+          doc: PANTONE(r) solid to process EURO
+        40:
+          id: svg_named_colors
+          -orig-id:
+            - cdrSVGPalette
+            - SVGColor # file name (SVGColor.xml)
+          doc: SVG Colors
