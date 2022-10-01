@@ -1413,13 +1413,15 @@ types:
               - size: 0
                 valid:
                   expr: |
-                    _root.version < 600 ? 14 :
-                    _io.pos - ofs_start == [16, 24, 24, 45][
-                      [
-                        [0, (_root.version - 1200) / 100].max,
-                        3
-                      ].min
-                    ]
+                    _io.pos - ofs_start == (
+                      _root.version < 600 ? 14 :
+                      [16, 24, 24, 45][
+                        [
+                          [0, (_root.version - 1200) / 100].max,
+                          3
+                        ].min
+                      ]
+                    )
             instances:
               ofs_start:
                 value: _io.pos
