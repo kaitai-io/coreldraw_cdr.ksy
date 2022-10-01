@@ -1141,6 +1141,7 @@ types:
                   any-of:
                     - 0 # usual value
                     - 36 # CorelDRAW 7: TUTORS/DRAW/FISHEYE.CDR
+                    - 127 # sample '22.cdr'
               - id: unknown_id
                 size: 2
                 if: _root.version >= 600
