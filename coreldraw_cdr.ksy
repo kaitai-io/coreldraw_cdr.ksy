@@ -1211,7 +1211,7 @@ types:
                   switch-on: type
                   cases:
                     property_type::color: color
-                    property_type::special_color_lab: color
+                    property_type::special_palette_color_lab: color
                     property_type::palette_guid: guid
                     property_type::special_palette_color_part1: special_palette_color_part1
                     property_type::special_palette_color_part2: special_palette_color_part2
@@ -1270,18 +1270,20 @@ types:
             0x01: color
             0x03: special_palette_color_part2
             0x06:
-              id: special_color_lab
+              id: special_palette_color_lab
               doc: |
-                in addition to `property_type::color` which may for example use
-                `color_model::cmyk100_i21`, this appears only for "special palette" colors
-                (together with `property_type::special_palette_color_id` and
-                `property_type::special_palette_color`) and uses `color_model::lab_i18`
-                (at least in samples I've seen).
+                in addition to the standard `property_type::color` which seems to be using
+                `color_model::bgr_tint` (whenever found in the same solid fill as
+                `property_type::special_palette_color_lab`), this property appears only
+                for "special palette" colors (as all
+                `property_type::special_palette_color_*` properties) and uses
+                `color_model::lab_offset_128` (at least in samples I've seen).
 
-                This kind of makes sense because CMYK (or whatever `property_type::color`
-                uses, which is also present) is a device-dependent color model, whereas
-                L*a*b* (stored in this property) is device-independent (so it's not
-                redundant to include both).
+                This kind of makes sense because RGB is a device-dependent color model,
+                whereas L*a*b* (stored in this property) is device-independent (so it's
+                not redundant to include both). The L*a*b* color also doesn't seem to be
+                affected by the "Tint", whereas the `color_model::bgr_tint` color in
+                `property_type::color` holds tint and factors the tint into the RGB value.
             0x07:
               id: palette_guid
               doc: |
@@ -1294,7 +1296,7 @@ types:
                 Google](https://www.google.com/search?q=cccd19cb-4675-4a5e-8bda-d0bbbaab8af0),
                 you actually get some results, which is interesting) only used for
                 `color_palette::user` colors using the CMYK color model
-                (`color_model::cmyk100_i2` or `color_model::cmyk255_i3`).
+                (`color_model::cmyk100` or `color_model::cmyk255_i3`).
 
                 You can also find `74 CD 6C FC A8 10 52 41 89 01 A5 1F AC B4 77 85`
                 (`fc6ccd74-10a8-4152-8901-a51facb47785`) in a few sample files, only used
@@ -2393,25 +2395,48 @@ types:
       # https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
       color_model:
         1: pantone
-        2: cmyk100_i2
+        2: cmyk100
         3: cmyk255_i3
         4: cmy
-        5: rgb
+        5: bgr
         6: hsb
         7: hls
         8: bw
         9: grayscale
         11: yiq255
-        12: lab_i12
+        12:
+          id: lab_signed_int8
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRCollector.cpp#L541-L554
+        13:
+          id: index
+          doc-ref: CorelDRAW 9 Draw_scr.hlp
+          doc: no longer present in CorelDRAW 10 DRAW10VBA.HLP
         14: pantone_hex
         15:
           id: hexachrome
           doc-ref: CorelDRAW 9 Draw_scr.hlp
           doc: no longer present in CorelDRAW 10 DRAW10VBA.HLP
         17: cmyk255_i17
-        18: lab_i18
+        18:
+          id: lab_offset_128
+          doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRCollector.cpp#L555-L568
         20: registration
-        21: cmyk100_i21
+        21:
+          id: bgr_tint
+          # NOTE: libcdr treats color model `21` (0x15) as CMYK100
+          # (https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRCollector.cpp#L339),
+          # but that is clearly wrong according to sample files
+          doc: |
+            Seen only in `fild_chunk_data::solid` in a `property_type::color`
+            property for "special palette" colors so far.
+
+            color_value[0]: Blue (0..255)
+            color_value[1]: Green (0..255)
+            color_value[2]: Red (0..255)
+            color_value[3]: Tint (0..100) - as in `color_model::spot`
+
+            However, note that "Tint" has already been factored into the RGB
+            value, so it's apparently just for reference.
         22:
           id: user_ink
           doc-ref: https://community.coreldraw.com/sdk/api/draw/17/e/cdrcolortype
