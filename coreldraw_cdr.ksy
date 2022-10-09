@@ -1213,7 +1213,7 @@ types:
                   switch-on: type
                   cases:
                     property_type::color: color
-                    property_type::special_color_lab: color
+                    property_type::special_palette_color_lab: color
                     property_type::palette_guid: guid
                     property_type::special_palette_color_part1: special_palette_color_part1
                     property_type::special_palette_color_part2: special_palette_color_part2
@@ -1272,13 +1272,14 @@ types:
             0x01: color
             0x03: special_palette_color_part2
             0x06:
-              id: special_color_lab
+              id: special_palette_color_lab
               doc: |
-                in addition to `property_type::color` which seems to be using
-                `color_model::bgr_tint` for "special palette" colors
-                (together with `property_type::special_palette_color_id` and
-                `property_type::special_palette_color`) and uses `color_model::lab_i18`
-                (at least in samples I've seen).
+                in addition to the standard `property_type::color` which seems to be using
+                `color_model::bgr_tint` (whenever found in the same solid fill as
+                `property_type::special_palette_color_lab`), this property appears only
+                for "special palette" colors (as all
+                `property_type::special_palette_color_*` properties) and uses
+                `color_model::lab_offset_128` (at least in samples I've seen).
 
                 This kind of makes sense because RGB is a device-dependent color model,
                 whereas L*a*b* (stored in this property) is device-independent (so it's
