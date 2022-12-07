@@ -230,12 +230,12 @@ types:
             # '"iccd"': iccd_chunk_data
             '"bbox"': bbox_chunk_data
             '"obbx"': obbx_chunk_data
-            # '"spnd"': spnd_chunk_data
+            '"spnd"': spnd_chunk_data
             '"uidr"': uidr_chunk_data
             # '"vpat"': vpat_chunk_data
-            # '"font"': font_chunk_data
+            '"font"': font_chunk_data
             '"stlt"': stlt_chunk_data
-            # '"txsm"': txsm_chunk_data
+            '"txsm"': txsm_chunk_data
             # '"udta"': udta_chunk_data
             # '"styd"': styd_chunk_data
 
@@ -1893,7 +1893,10 @@ types:
         type: coord
       - id: p3_y
         type: coord
-  # spnd_chunk_data: {}
+  spnd_chunk_data:
+    seq:
+      - id: spnd
+        type: u4
   uidr_chunk_data:
     seq:
       - id: color_id
@@ -1905,7 +1908,15 @@ types:
       - id: color
         type: color
   # vpat_chunk_data: {}
-  # font_chunk_data: {}
+  font_chunk_data:
+    seq:
+      - id: font_id
+        type: u2
+      - id: font_encoding
+        type: u2
+      - size: 14
+      - id: font_name
+        size-eos: true
   stlt_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2194
     seq:
@@ -2121,15 +2132,363 @@ types:
             type: u4
           - id: outl_id
             type: u4
-          # FIXME: this actually has a known structure (https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2352-L2368),
-          # but it's not important to me right now
-          - size: |
-              (num > 1 ? sizeof<u4> * 4 + (_parent.mapping_section.has_set11s ? sizeof<u4> : 0) : 0) +
-              (num > 2 ? sizeof<u4> * 5 : 0)
+          - id: ext_font_properties_1
+            type: extended_font_properties_1
+            if: num > 1
+          - id: ext_font_properties_2
+            type: extended_font_properties_2
+            if: num > 2
         instances:
           name:
             value: '_root.version >= 1200 ? name_new : name_old'
-  # txsm_chunk_data: {}
+      extended_font_properties_1:
+        seq:
+          - id: font_rec_id
+            type: u4
+          - id: align_id
+            type: u4
+          - id: interval_id
+            type: u4
+          - id: set5_id
+            type: u4
+          - id: set11_id
+            type: u4
+            if: _parent._parent.mapping_section.has_set11s
+      extended_font_properties_2:
+        seq:
+          - id: tab_id
+            type: u4
+          - id: bullet_id
+            type: u4
+          - id: indent_id
+            type: u4
+          - id: hyphen_id
+            type: u4
+          - id: drop_cap_id
+            type: u4
+  txsm_chunk_data:
+    seq:
+      - id: body
+        type:
+          switch-on: '_root.version < 500 ? 0 : (_root.version < 600 ? 5 : (_root.version < 700 ? 6 : (_root.version >= 1600 ? 16 : 7)))'
+          cases:
+            0: txsm_0
+            5: txsm_5
+            6: txsm_6
+            7: txsm_7
+            16: txsm_16
+    types:
+      txsm_0:
+        seq: []
+      txsm_5:
+        seq: []
+      txsm_6:
+        seq: []
+      txsm_7:
+        seq:
+          - id: frame_flag
+            type: u4
+          - size: 32
+          - size: 1
+            if: _root.version >= 1500
+          - type: skip_1
+            if: _root.version <= 700
+          - id: num_frames
+            type: u4
+          - id: frames
+            type: frame(frame_flag)
+            repeat: expr
+            repeat-expr: num_frames
+          - id: num_para
+            type: u4
+          - id: paras
+            type: para(frame_flag)
+            repeat: expr
+            repeat-expr: num_para
+        types:
+          skip_1:
+            seq:
+              - id: text_on_path
+                type: u4
+              - size: 32
+                if: text_on_path == 1
+          frame:
+            params:
+              - id: frame_flag
+                type: u4
+            seq:
+              - id: frame_id
+                type: u4
+              - size: 48
+              - type: skip_2
+                if: _root.version > 700
+              - size: skip_4.value
+                if: frame_flag == 0
+              - size: 4
+                if: frame_flag != 0 and _root.version >= 1500
+            types:
+              skip_2:
+                seq:
+                  - id: text_on_path
+                    type: u4
+                  - type: skip_3
+                    if: text_on_path == 1
+                  - size: 8
+                    if: text_on_path != 1 and _root.version >= 1500
+                types:
+                  skip_3:
+                    seq:
+                      - size: 4
+                      - size: 8
+                        if: _root.version > 1200
+                      - size: 28
+                      - size: 8
+                        if: _root.version >= 1500
+              val:
+                params:
+                  - id: value
+                    type: u4
+            instances:
+              skip_4:
+                type:
+                  # skip_4 and val(x) are workarounds for the fact that switch-on is not allowed as a size expression
+                  switch-on: '_root.version >= 1500 ? 1500 : (_root.version >= 1400 ? 1400 : (_root.version > 800 ? 801 : (_root.version >= 800 ? 800 : (_root.version >= 700 ? 700 : 0))))'
+                  cases:
+                    1500: val(40)
+                    1400: val(36)
+                    801:  val(34)
+                    800:  val(32)
+                    700:  val(36)
+                    _:    val(0)
+          para:
+            params:
+              - id: frame_flag
+                type: u4
+            seq:
+              - id: stl_id
+                type: u4
+              - size: 1
+              - size: 1
+                if: _root.version > 1200 and frame_flag != 0
+              - id: num_styles
+                type: u4
+              - id: styles
+                type: style
+                repeat: expr
+                repeat-expr: num_styles
+              - id: num_chars
+                type: u4
+              - id: char_descriptions
+                repeat: expr
+                repeat-expr: num_chars
+                type: char_description
+              - id: num_bytes_in_text_raw
+                type: u4
+                if: _root.version >= 1200
+              - id: text_data
+                size: num_bytes_in_text
+              - size: 1 # null terminator
+            instances:
+              num_bytes_in_text:
+                value: '_root.version >= 1200 ? num_bytes_in_text_raw : num_chars'
+            types:
+              style:
+                seq:
+                  - id: num_chars
+                    type: u2
+                  - id: fl2
+                    type: u1
+                  - id: fl3_maybe
+                    type: u1
+                    if: _root.version >= 800
+                  - id: font
+                    type: font_data
+                    if: (fl2 & 1) != 0
+                  - id: style_flags
+                    type: u4
+                    if: (fl2 & 2) != 0
+                  - id: font_size
+                    type: coord
+                    if: (fl2 & 4) != 0
+                  - size: 4
+                    if: (fl2 & 8) != 0
+                  - size: 4
+                    if: (fl2 & 0x10) != 0
+                  - size: 4
+                    if: (fl2 & 0x20) != 0
+                  - id: font_colour
+                    type: font_colour_data
+                    if: (fl2 & 0x40) != 0
+                  - id: outline_colour_stl_id
+                    type: u4
+                    if: (fl2 & 0x80) != 0
+                  - type: skip_5
+                    if: (fl3 & 8) != 0
+                  - type: skip_6
+                    if: (fl3 & 0x20) != 0
+                instances:
+                  fl3:
+                    value: '_root.version >= 800 ? fl3_maybe : 0'
+                types:
+                  font_data:
+                    seq:
+                      - id: font_id
+                        type: u2
+                      - id: char_set
+                        type: u2
+                  font_colour_data:
+                    seq:
+                      - id: fill_id
+                        type: u4
+                      - size: 48
+                        if: _root.version >= 1300
+                  skip_5:
+                    seq:
+                      - id: len
+                        type: u4
+                      - size: len * 2
+                        if: _root.version >= 1300
+                  skip_6:
+                    seq:
+                      - size: '_root.version >= 1500 ? 52 : 4'
+                        if: flag != 0
+                    instances:
+                      flag:
+                        type: u1
+                        pos: 0
+              char_description:
+                seq:
+                  - id: raw_64
+                    type: u8
+                    if: _root.version >= 1200
+                  - id: raw_32
+                    type: u4
+                    if: _root.version < 1200
+                instances:
+                  internal_value_helper:
+                    value: '_root.version >= 1200 ? (raw_64 & 0xffffffff).as<u4> : raw_32'
+                  value:
+                    value: ((internal_value_helper >> 16) | (internal_value_helper & 1)).as<u1>
+      txsm_16:
+        seq:
+          - id: frame_flag
+            type: u4
+          - size: 37
+          - id: num_frames
+            type: u4
+          - id: frames
+            type: frame(frame_flag)
+            repeat: expr
+            repeat-expr: num_frames
+          - id: num_para
+            type: u4
+          - id: paras
+            type: para(frame_flag)
+            repeat: expr
+            repeat-expr: num_para
+        types:
+          frame:
+            params:
+              - id: frame_flag
+                type: u4
+            seq:
+              - id: frame_id
+                type: u4
+              - size: 48
+              - id: text_on_path
+                type: u4
+              - size: 40
+                if: text_on_path == 1
+              - size: 8
+              - type: skip
+                if: frame_flag == 0
+          para:
+            params:
+              - id: frame_flag
+                type: u4
+            seq:
+              - id: stl_id
+                type: u4
+              - size: 1
+              - id: flag
+                type: u1
+                if: frame_flag != 0
+              # This section of unknown use is not accounted for by libcdr, but it might have something to do with
+              # curved text.
+              # The size and condition below are a guess based on just one sample input file.
+              - size: 64
+                if: flag == 1
+              - id: default_style
+                type: style_string
+              - id: num_records
+                type: u4
+              - id: style_records
+                type: style_record
+                repeat: expr
+                repeat-expr: num_records
+              - id: num_chars
+                type: u4
+              - id: char_descriptions
+                repeat: expr
+                repeat-expr: num_chars
+                type: char_description
+              - id: num_bytes_in_text
+                type: u4
+              - id: text_data
+                size: num_bytes_in_text
+              # null terminator
+              - size: 1
+          style_record:
+            seq:
+              - size: 2
+              - id: st_flag_1
+                type: u2
+              - id: st_flag_2
+                type: u2
+              - id: encoding
+                type: text_encoding
+                if: (st_flag_2 & 0x04) != 0
+              # This section of unknown use is not accounted for by libcdr
+              # The size and condition below are a guess based on just one sample input file.
+              - size: 9
+                if: st_flag_1 == 0x3fff and (st_flag_2 & 0x11) == 0x11
+              - id: style
+                type: style_string
+                if: st_flag_1 != 0 or (st_flag_2 & 0x04) != 0
+          style_string:
+            seq:
+              - id: len
+                type: version_adjusted_int
+              - id: value
+                size: len.value
+          text_encoding:
+            seq:
+              - id: len_divided_by_2
+                type: u4
+              - id: value
+                size: len_divided_by_2 * 2
+          skip:
+            seq:
+              - size: 16
+              - id: t_len
+                type: u4
+              - size: '(_root.version > 1600) ? t_len : (t_len * 2)'
+          version_adjusted_int:
+            seq:
+              - id: raw_value
+                type: u4
+            instances:
+              value:
+                value: '_root.version < 1700 ? raw_value * 2 : raw_value'
+          char_description:
+            seq:
+              - id: raw
+                type: u8
+            instances:
+              internal_value_helper:
+                value: (raw & 0xffffffff).as<u4>
+              value:
+                value: ((internal_value_helper >> 16) | (internal_value_helper & 1)).as<u1>
   # udta_chunk_data: {}
   # styd_chunk_data: {}
 
