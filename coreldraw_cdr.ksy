@@ -1966,8 +1966,10 @@ types:
 
           - id: num_intervals
             type: u4
-          - id: intervals_raw
-            size: 52 * num_intervals
+          - id: intervals
+            type: interval
+            repeat: expr
+            repeat-expr: num_intervals
 
           - id: num_set5s
             type: u4
@@ -2078,7 +2080,22 @@ types:
             type: text_style_flags
           - size: 8
             if: '_root.version >= 1000'
-          - size: '_root.version < 1000 ? 12 : 20'
+      interval:
+        seq:
+          - id: id
+            type: u4
+          - size: 8
+          - id: inter_char_spacing_raw
+            type: u4
+          - size: 8
+          - id: inter_line_spacing_raw
+            type: u4
+          - size: 24
+        instances:
+          inter_line_spacing:
+            value: 'inter_line_spacing_raw.as<f8> / 1000000'
+          inter_char_spacing:
+            value: 'inter_char_spacing_raw.as<f8> / 1000000'
       bullet:
         seq:
           - size: 40
