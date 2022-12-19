@@ -3120,7 +3120,7 @@ types:
         enum: decoration
       - id: script
         type: b2
-        enum: script
+        enum: script_type
     instances:
       italic:
         value: emphasis_raw == 0x0080 or emphasis_raw == 0x2000
@@ -3135,7 +3135,7 @@ types:
         4: single_thick_word
         5: double_thin
         6: double_thin_word
-      script:
+      script_type:
         0: none
         1: superscript
         2: subscript
