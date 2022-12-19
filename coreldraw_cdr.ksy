@@ -3121,6 +3121,11 @@ types:
       - id: script
         type: b2
         enum: script
+    instances:
+      italic:
+        value: emphasis_raw == 0x0080 or emphasis_raw == 0x2000
+      bold:
+        value: emphasis_raw == 0x1000 or emphasis_raw == 0x2000
     enums:
       decoration:
         0: none
