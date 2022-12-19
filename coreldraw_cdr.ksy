@@ -11,6 +11,7 @@ meta:
     wikidata: Q939636
   encoding: ASCII
   endian: le
+  bit-endian: le
 doc: |
   A native file format of CorelDRAW.
 
@@ -1914,6 +1915,7 @@ types:
         type: u2
       - id: font_encoding
         type: u2
+        enum: text_encoding
       - size: 14
       - id: font_name
         size-eos: true
@@ -2066,6 +2068,7 @@ types:
             type: u2
           - id: font_encoding
             type: u2
+            enum: text_encoding
           - size: 8
           - id: font_size
             type: coord
@@ -2186,55 +2189,78 @@ types:
         seq: []
       txsm_7:
         seq:
-          - id: frame_flag
+          - id: frame_flag_raw
             type: u4
           - size: 32
           - size: 1
             if: _root.version >= 1500
           - type: skip_1
-            if: _root.version <= 700
+            # libcdr checks for versions <= 700 instead, which is odd because it would include
+            # version 700 but not minor version updates like 701. The simplest explanation is that
+            # it's supposed to be <800.
+            if: _root.version < 800
           - id: num_frames
             type: u4
           - id: frames
             type: frame(frame_flag)
             repeat: expr
             repeat-expr: num_frames
-          - id: num_para
+          - id: num_paragraphs
             type: u4
-          - id: paras
+          - id: paragraphs
             type: para(frame_flag)
             repeat: expr
-            repeat-expr: num_para
+            repeat-expr: num_paragraphs
+        instances:
+          frame_flag:
+            value: frame_flag_raw != 0
         types:
           skip_1:
             seq:
-              - id: text_on_path
+              - id: text_on_path_raw
                 type: u4
               - size: 32
-                if: text_on_path == 1
+                if: text_on_path
+            instances:
+              text_on_path:
+                value: text_on_path_raw != 0
           frame:
             params:
               - id: frame_flag
-                type: u4
+                type: bool
             seq:
               - id: frame_id
                 type: u4
               - size: 48
               - type: skip_2
                 if: _root.version > 700
-              - size: skip_4.value
-                if: frame_flag == 0
+              - size: |
+                  _root.version >= 1500
+                    ? 40 :
+                  _root.version >= 1400
+                    ? 36 :
+                  _root.version >= 801
+                    ? 34 :
+                  _root.version == 800
+                    ? 32 :
+                  _root.version >= 700
+                    ? 36
+                    : 0
+                if: not frame_flag
               - size: 4
-                if: frame_flag != 0 and _root.version >= 1500
+                if: frame_flag and _root.version >= 1500
             types:
               skip_2:
                 seq:
-                  - id: text_on_path
+                  - id: text_on_path_raw
                     type: u4
                   - type: skip_3
-                    if: text_on_path == 1
+                    if: text_on_path
                   - size: 8
-                    if: text_on_path != 1 and _root.version >= 1500
+                    if: not text_on_path and _root.version >= 1500
+                instances:
+                  text_on_path:
+                    value: text_on_path_raw != 0
                 types:
                   skip_3:
                     seq:
@@ -2244,32 +2270,16 @@ types:
                       - size: 28
                       - size: 8
                         if: _root.version >= 1500
-              val:
-                params:
-                  - id: value
-                    type: u4
-            instances:
-              skip_4:
-                type:
-                  # skip_4 and val(x) are workarounds for the fact that switch-on is not allowed as a size expression
-                  switch-on: '_root.version >= 1500 ? 1500 : (_root.version >= 1400 ? 1400 : (_root.version > 800 ? 801 : (_root.version >= 800 ? 800 : (_root.version >= 700 ? 700 : 0))))'
-                  cases:
-                    1500: val(40)
-                    1400: val(36)
-                    801:  val(34)
-                    800:  val(32)
-                    700:  val(36)
-                    _:    val(0)
           para:
             params:
               - id: frame_flag
-                type: u4
+                type: bool
             seq:
-              - id: stl_id
+              - id: style_id
                 type: u4
               - size: 1
               - size: 1
-                if: _root.version > 1200 and frame_flag != 0
+                if: _root.version > 1200 and frame_flag
               - id: num_styles
                 type: u4
               - id: styles
@@ -2279,15 +2289,15 @@ types:
               - id: num_chars
                 type: u4
               - id: char_descriptions
+                type: char_description
                 repeat: expr
                 repeat-expr: num_chars
-                type: char_description
               - id: num_bytes_in_text_raw
                 type: u4
                 if: _root.version >= 1200
               - id: text_data
                 size: num_bytes_in_text
-              - size: 1 # null terminator
+              - contents: [0x00] # null terminator
             instances:
               num_bytes_in_text:
                 value: '_root.version >= 1200 ? num_bytes_in_text_raw : num_chars'
@@ -2296,34 +2306,48 @@ types:
                 seq:
                   - id: num_chars
                     type: u2
-                  - id: fl2
-                    type: u1
+                  - id: has_font
+                    type: b1 # 0x01
+                  - id: has_style_flags
+                    type: b1 # 0x02
+                  - id: has_font_size
+                    type: b1 # 0x04
+                  - id: has_unknown # "// assumption" in libcdr
+                    type: b1 # 0x08
+                  - id: has_offset_x
+                    type: b1 # 0x10
+                  - id: has_offset_y
+                    type: b1 # 0x20
+                  - id: has_font_color
+                    type: b1 # 0x40
+                  - id: has_outl_id
+                    type: b1 # 0x80
                   - id: fl3_maybe
                     type: u1
                     if: _root.version >= 800
                   - id: font
                     type: font_data
-                    if: (fl2 & 1) != 0
+                    if: has_font
                   - id: style_flags
                     type: u4
-                    if: (fl2 & 2) != 0
+                    if: has_style_flags
                   - id: font_size
                     type: coord
-                    if: (fl2 & 4) != 0
+                    if: has_font_size
                   - size: 4
-                    if: (fl2 & 8) != 0
+                    if: has_unknown
                   - size: 4
-                    if: (fl2 & 0x10) != 0
+                    if: has_offset_x
                   - size: 4
-                    if: (fl2 & 0x20) != 0
-                  - id: font_colour
-                    type: font_colour_data
-                    if: (fl2 & 0x40) != 0
-                  - id: outline_colour_stl_id
+                    if: has_offset_y
+                  - id: font_color
+                    type: font_color_data
+                    if: has_font_color
+                  - id: outl_id
                     type: u4
-                    if: (fl2 & 0x80) != 0
+                    if: has_outl_id
                   - type: skip_5
-                    if: (fl3 & 8) != 0
+                    if: (fl3 & 0x08) != 0
                   - type: skip_6
                     if: (fl3 & 0x20) != 0
                 instances:
@@ -2334,9 +2358,10 @@ types:
                     seq:
                       - id: font_id
                         type: u2
-                      - id: char_set
+                      - id: encoding
                         type: u2
-                  font_colour_data:
+                        enum: text_encoding
+                  font_color_data:
                     seq:
                       - id: fill_id
                         type: u4
@@ -2353,25 +2378,14 @@ types:
                       - size: '_root.version >= 1500 ? 52 : 4'
                         if: flag != 0
                     instances:
+                      ofs_flag:
+                        value: _io.pos
                       flag:
+                        pos: ofs_flag
                         type: u1
-                        pos: 0
-              char_description:
-                seq:
-                  - id: raw_64
-                    type: u8
-                    if: _root.version >= 1200
-                  - id: raw_32
-                    type: u4
-                    if: _root.version < 1200
-                instances:
-                  internal_value_helper:
-                    value: '_root.version >= 1200 ? (raw_64 & 0xffffffff).as<u4> : raw_32'
-                  value:
-                    value: ((internal_value_helper >> 16) | (internal_value_helper & 1)).as<u1>
       txsm_16:
         seq:
-          - id: frame_flag
+          - id: frame_flag_raw
             type: u4
           - size: 37
           - id: num_frames
@@ -2380,39 +2394,45 @@ types:
             type: frame(frame_flag)
             repeat: expr
             repeat-expr: num_frames
-          - id: num_para
+          - id: num_paragraphs
             type: u4
-          - id: paras
+          - id: paragraphs
             type: para(frame_flag)
             repeat: expr
-            repeat-expr: num_para
+            repeat-expr: num_paragraphs
+        instances:
+          frame_flag:
+            value: frame_flag_raw != 0
         types:
           frame:
             params:
               - id: frame_flag
-                type: u4
+                type: bool
             seq:
               - id: frame_id
                 type: u4
               - size: 48
-              - id: text_on_path
+              - id: text_on_path_raw
                 type: u4
               - size: 40
-                if: text_on_path == 1
+                if: text_on_path
               - size: 8
               - type: skip
-                if: frame_flag == 0
+                if: not frame_flag
+            instances:
+              text_on_path:
+                value: text_on_path_raw != 0
           para:
             params:
               - id: frame_flag
-                type: u4
+                type: bool
             seq:
-              - id: stl_id
+              - id: style_id
                 type: u4
               - size: 1
               - id: flag
                 type: u1
-                if: frame_flag != 0
+                if: frame_flag
               # This section of unknown use is not accounted for by libcdr, but it might have something to do with
               # curved text.
               # The size and condition below are a guess based on just one sample input file.
@@ -2429,15 +2449,14 @@ types:
               - id: num_chars
                 type: u4
               - id: char_descriptions
+                type: char_description
                 repeat: expr
                 repeat-expr: num_chars
-                type: char_description
               - id: num_bytes_in_text
                 type: u4
               - id: text_data
                 size: num_bytes_in_text
-              # null terminator
-              - size: 1
+              - contents: [0x00] # null terminator
           style_record:
             seq:
               - size: 2
@@ -2457,10 +2476,13 @@ types:
                 if: st_flag_1 != 0 or (st_flag_2 & 0x04) != 0
           style_string:
             seq:
-              - id: len
-                type: version_adjusted_int
+              - id: len_raw
+                type: u4
               - id: value
-                size: len.value
+                size: len
+            instances:
+              len:
+                value: '_root.version < 1700 ? len_raw * 2 : len_raw'
           text_encoding:
             seq:
               - id: len_divided_by_2
@@ -2473,22 +2495,18 @@ types:
               - id: t_len
                 type: u4
               - size: '(_root.version > 1600) ? t_len : (t_len * 2)'
-          version_adjusted_int:
-            seq:
-              - id: raw_value
-                type: u4
-            instances:
-              value:
-                value: '_root.version < 1700 ? raw_value * 2 : raw_value'
-          char_description:
-            seq:
-              - id: raw
-                type: u8
-            instances:
-              internal_value_helper:
-                value: (raw & 0xffffffff).as<u4>
-              value:
-                value: ((internal_value_helper >> 16) | (internal_value_helper & 1)).as<u1>
+      char_description:
+        seq:
+          - id: flags
+            type: u2
+          - id: style_override_idx_raw
+            type: u1
+          - size: 1 # usually 0x00, but can also be 0x20, 0x40 or 0x60
+          - size: 4
+            if: _root.version >= 1200
+        instances:
+          style_override_idx:
+            value: style_override_idx_raw >> 1
   # udta_chunk_data: {}
   # styd_chunk_data: {}
 
@@ -3014,3 +3032,24 @@ types:
             - cdrSVGPalette
             - SVGColor # file name (SVGColor.xml)
           doc: SVG Colors
+enums:
+  text_encoding:
+    0x00: latin                     # cp1252
+    0x01: system_default
+    0x02: symbol
+    0x4d: apple_roman               # cp10000 ?
+    0x80: japanese_shift_jis        # cp932
+    0x81: korean_hangul             # cp949
+    0x82: korean_johab              # cp1361
+    0x86: chinese_simplified_gbk    # cp936
+    0x88: chinese_traditional_big5  # cp950
+    0xa1: greek                     # cp1253
+    0xa2: turkish                   # cp1254
+    0xa3: vietnamese                # cp1258
+    0xb1: hebrew                    # cp1255
+    0xb2: arabic                    # cp1256
+    0xba: baltic                    # cp1257
+    0xcc: cyrillic                  # cp1251
+    0xde: thai                      # cp874
+    0xee: latin_ii_central_european # cp1250
+    0xff: oem_latin_i
