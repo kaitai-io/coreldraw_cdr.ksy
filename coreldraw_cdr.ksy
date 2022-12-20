@@ -2231,7 +2231,7 @@ types:
           - id: num_paragraphs
             type: u4
           - id: paragraphs
-            type: para(frame_flag)
+            type: paragraph(frame_flag)
             repeat: expr
             repeat-expr: num_paragraphs
         instances:
@@ -2293,7 +2293,7 @@ types:
                       - size: 28
                       - size: 8
                         if: _root.version >= 1500
-          para:
+          paragraph:
             params:
               - id: frame_flag
                 type: bool
@@ -2420,7 +2420,7 @@ types:
           - id: num_paragraphs
             type: u4
           - id: paragraphs
-            type: para(frame_flag)
+            type: paragraph(frame_flag)
             repeat: expr
             repeat-expr: num_paragraphs
         instances:
@@ -2445,7 +2445,7 @@ types:
             instances:
               text_on_path:
                 value: text_on_path_raw != 0
-          para:
+          paragraph:
             params:
               - id: frame_flag
                 type: bool
