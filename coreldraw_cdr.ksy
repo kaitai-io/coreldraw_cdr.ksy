@@ -3121,6 +3121,7 @@ types:
       - id: script
         type: b2
         enum: script_type
+      - type: b3
     instances:
       italic:
         value: emphasis_raw == 0x0080 or emphasis_raw == 0x2000
