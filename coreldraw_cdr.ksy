@@ -2410,7 +2410,13 @@ types:
         seq:
           - id: frame_flag_raw
             type: u4
-          - size: 37
+          - size: 32
+          # In most cases, these bytes are set to 1800. The only other value I have seen so far is
+          # 1600, and the presence of that value seems to correlate with a different layout in
+          # 'paragraph.'
+          - id: style_layout_version
+            type: u2
+          - size: 3
           - id: num_frames
             type: u4
           - id: frames
@@ -2461,6 +2467,9 @@ types:
               # The size and condition below are a guess based on just one sample input file.
               - size: 64
                 if: flag == 1
+              - id: paragraph_style
+                type: style_string
+                if: _parent.style_layout_version < 1800
               - id: default_style
                 type: style_string
               - id: num_records
