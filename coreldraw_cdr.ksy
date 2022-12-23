@@ -2225,13 +2225,13 @@ types:
           - id: num_frames
             type: u4
           - id: frames
-            type: frame(frame_flag)
+            type: frame
             repeat: expr
             repeat-expr: num_frames
           - id: num_paragraphs
             type: u4
           - id: paragraphs
-            type: paragraph(frame_flag)
+            type: paragraph
             repeat: expr
             repeat-expr: num_paragraphs
         instances:
@@ -2248,9 +2248,6 @@ types:
               text_on_path:
                 value: text_on_path_raw != 0
           frame:
-            params:
-              - id: frame_flag
-                type: bool
             seq:
               - id: frame_id
                 type: u4
@@ -2269,9 +2266,9 @@ types:
                   _root.version >= 700
                     ? 36
                     : 0
-                if: not frame_flag
+                if: not _parent.frame_flag
               - size: 4
-                if: frame_flag and _root.version >= 1500
+                if: _parent.frame_flag and _root.version >= 1500
             types:
               skip_2:
                 seq:
@@ -2294,15 +2291,12 @@ types:
                       - size: 8
                         if: _root.version >= 1500
           paragraph:
-            params:
-              - id: frame_flag
-                type: bool
             seq:
               - id: style_id
                 type: u4
               - size: 1
               - size: 1
-                if: _root.version > 1200 and frame_flag
+                if: _root.version > 1200 and _parent.frame_flag
               - id: num_styles
                 type: u4
               - id: styles
@@ -2420,13 +2414,13 @@ types:
           - id: num_frames
             type: u4
           - id: frames
-            type: frame(frame_flag)
+            type: frame
             repeat: expr
             repeat-expr: num_frames
           - id: num_paragraphs
             type: u4
           - id: paragraphs
-            type: paragraph(frame_flag)
+            type: paragraph
             repeat: expr
             repeat-expr: num_paragraphs
         instances:
@@ -2434,9 +2428,6 @@ types:
             value: frame_flag_raw != 0
         types:
           frame:
-            params:
-              - id: frame_flag
-                type: bool
             seq:
               - id: frame_id
                 type: u4
@@ -2447,21 +2438,18 @@ types:
                 if: text_on_path
               - size: 8
               - type: skip
-                if: not frame_flag
+                if: not _parent.frame_flag
             instances:
               text_on_path:
                 value: text_on_path_raw != 0
           paragraph:
-            params:
-              - id: frame_flag
-                type: bool
             seq:
               - id: style_id
                 type: u4
               - size: 1
               - id: flag
                 type: u1
-                if: frame_flag
+                if: _parent.frame_flag
               # This section of unknown use is not accounted for by libcdr, but it might have something to do with
               # curved text.
               # The size and condition below are a guess based on just one sample input file.
