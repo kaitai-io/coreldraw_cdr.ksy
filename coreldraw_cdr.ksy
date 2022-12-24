@@ -2405,9 +2405,9 @@ types:
           - id: frame_flag_raw
             type: u4
           - size: 32
-          # In most cases, these bytes are set to 1800. The only other value I have seen so far is
-          # 1600, and the presence of that value seems to correlate with a different layout in
-          # 'paragraph.'
+          # In most cases, these bytes are set to 1700 or 1800. The only other value I have seen so
+          # far is 1600, and the presence of that value seems to correlate with a different layout
+          # in 'paragraph.'
           - id: style_layout_version
             type: u2
           - size: 3
@@ -2457,7 +2457,7 @@ types:
                 if: flag == 1
               - id: paragraph_style
                 type: style_string
-                if: _parent.style_layout_version < 1800
+                if: _parent.style_layout_version < 1700
               - id: default_style
                 type: style_string
               - id: num_records
