@@ -2485,39 +2485,35 @@ types:
                 type: u2
               - id: st_flag_3
                 type: u2
-              - id: encoding
-                type: text_encoding
-                if: (st_flag_3 & 0x04) != 0
               - id: url_properties
                 type: url_props
                 if: st_flag_2 == 0x3fff and (st_flag_3 & 0x11) == 0x11
+              - id: encoding
+                type: text_encoding
+                if: (st_flag_3 & 0x04) != 0
               - id: style
                 type: style_string
                 if: st_flag_2 != 0 or (st_flag_3 & 0x04) != 0
             types:
               url_props:
                 seq:
-                  - id: url_id_len_raw
-                    size: 3
-                  - size: 1
-                    if: has_url_id
-                  - id: url_id_raw
+                  - id: url_id_len
+                    type: u4
+                  - id: url_id_old
+                    type: str
+                    encoding: UTF-16LE
+                    size: url_id_len * 2
+                    if: _root.version < 1700
+                  - id: url_id_new
                     type: str
                     encoding: ascii
                     size: url_id_len
-                  - id: url_command
-                    size: 6
-                    type: str
-                    encoding: UTF-16LE
-                    if: not has_url_id
+                    if: _root.version >= 1700
                 instances:
-                  url_id_len:
-                    value: 'url_id_len_raw[0].as<u4> | (url_id_len_raw[1].as<u4> << 8) | (url_id_len_raw[2].as<u4> << 16)'
-                  has_url_id:
-                    value: url_id_len > 0
+                  url_id_raw:
+                    value: '_root.version < 1700 ? url_id_old : url_id_new'
                   url_id:
                     value: url_id_raw.to_i
-                    if: has_url_id
           text_encoding:
             seq:
               - id: len_divided_by_2
