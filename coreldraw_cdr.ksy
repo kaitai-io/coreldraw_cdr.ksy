@@ -2363,9 +2363,13 @@ types:
                   - id: outl_id
                     type: u4
                     if: has_outl_id
-                  - type: skip_5
+                  - id: url_properties
+                    type: url_props
+                    if: (fl3 & 0x02) != 0
+                  - id: language
+                    type: text_language
                     if: (fl3 & 0x08) != 0
-                  - type: skip_6
+                  - type: skip_5
                     if: (fl3 & 0x20) != 0
                 instances:
                   fl3:
@@ -2385,12 +2389,6 @@ types:
                       - size: 48
                         if: _root.version >= 1300
                   skip_5:
-                    seq:
-                      - id: len
-                        type: u4
-                      - size: len * 2
-                        if: _root.version >= 1300
-                  skip_6:
                     seq:
                       - size: '_root.version >= 1500 ? 52 : 4'
                         if: flag != 0
@@ -2488,13 +2486,30 @@ types:
               - id: url_properties
                 type: url_props
                 if: st_flag_2 == 0x3fff and (st_flag_3 & 0x11) == 0x11
-              - id: encoding
-                type: text_encoding
+              - id: language
+                type: text_language
                 if: (st_flag_3 & 0x04) != 0
               - id: style
                 type: style_string
                 if: st_flag_2 != 0 or (st_flag_3 & 0x04) != 0
-            types:
+          skip:
+            seq:
+              - size: 16
+              - id: t_len
+                type: u4
+              - size: '(_root.version > 1600) ? t_len : (t_len * 2)'
+      char_description:
+        seq:
+          - id: flags
+            type: u2
+          - id: style_override_idx_raw
+            type: u1
+          - size: 1 # usually 0x00, but can also be 0x20, 0x40 or 0x60
+          - size: 4
+            if: _root.version >= 1200
+        instances:
+          style_override_idx:
+            value: style_override_idx_raw >> 1
               url_props:
                 seq:
                   - id: url_id_len
@@ -2514,30 +2529,16 @@ types:
                     value: '_root.version < 1700 ? url_id_old : url_id_new'
                   url_id:
                     value: url_id_raw.to_i
-          text_encoding:
+      text_language:
+        doc-ref: https://www.ibm.com/docs/en/cics-ts/5.5?topic=development-national-language-codes-application
             seq:
-              - id: len_divided_by_2
+          - id: len
                 type: u4
               - id: value
-                size: len_divided_by_2 * 2
-          skip:
-            seq:
-              - size: 16
-              - id: t_len
-                type: u4
-              - size: '(_root.version > 1600) ? t_len : (t_len * 2)'
-      char_description:
-        seq:
-          - id: flags
-            type: u2
-          - id: style_override_idx_raw
-            type: u1
-          - size: 1 # usually 0x00, but can also be 0x20, 0x40 or 0x60
-          - size: 4
-            if: _root.version >= 1200
-        instances:
-          style_override_idx:
-            value: style_override_idx_raw >> 1
+            type: str
+            encoding: UTF-16LE
+            size: len * 2
+            if: _root.version >= 1300
   urls_chunk_data:
     seq:
       - id: text
