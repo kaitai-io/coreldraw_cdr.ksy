@@ -2526,14 +2526,14 @@ types:
                   - id: url_id_len
                     type: u4
                   - id: url_id_old
+            size: url_id_len * 2
                     type: str
                     encoding: UTF-16LE
-                    size: url_id_len * 2
                     if: _root.version < 1700
                   - id: url_id_new
+            size: url_id_len
                     type: str
                     encoding: ascii
-                    size: url_id_len
                     if: _root.version >= 1700
                 instances:
                   url_id_raw:
