@@ -2521,27 +2521,27 @@ types:
         instances:
           style_override_idx:
             value: style_override_idx_raw >> 1
-              url_props:
-                seq:
-                  - id: url_id_len
-                    type: u4
-                  - id: url_id_old
+      url_props:
+        seq:
+          - id: url_id_len
+            type: u4
+          - id: url_id_old
             size: url_id_len * 2
-                    type: str
-                    encoding: UTF-16LE
-                    if: _root.version < 1700
-                  - id: url_id_new
+            type: str
+            encoding: UTF-16LE
+            if: _root.version < 1700
+          - id: url_id_new
             size: url_id_len
-                    type: str
-                    encoding: ascii
-                    if: _root.version >= 1700
-                instances:
-                  url_id_raw:
-                    value: '_root.version < 1700 ? url_id_old : url_id_new'
-                  url_id:
-                    value: url_id_raw.to_i
+            type: str
+            encoding: ascii
+            if: _root.version >= 1700
+        instances:
+          url_id_raw:
+            value: '_root.version < 1700 ? url_id_old : url_id_new'
+          url_id:
+            value: url_id_raw.to_i
       text_language:
-            seq:
+        seq:
           - id: value_old
             size: 4
             type: strz
@@ -2549,7 +2549,7 @@ types:
             if: _root.version < 1300
 
           - id: value_new_len_raw
-                type: u4
+            type: u4
             if: _root.version >= 1300
           - id: value_new
             doc-ref: https://www.ibm.com/docs/en/cics-ts/5.5?topic=development-national-language-codes-application
