@@ -2314,10 +2314,15 @@ types:
                 if: _root.version >= 1200
               - id: text_data
                 size: num_bytes_in_text
-              - contents: [0x00] # null terminator
+              - id: has_path_raw
+                type: u1
+              - size: num_chars * 24
+                if: has_path
             instances:
               num_bytes_in_text:
                 value: '_root.version >= 1200 ? num_bytes_in_text_raw : num_chars'
+              has_path:
+                value: has_path_raw != 0
             types:
               style:
                 seq:
@@ -2474,7 +2479,13 @@ types:
                 type: u4
               - id: text_data
                 size: num_bytes_in_text
-              - contents: [0x00] # null terminator
+              - id: has_path_raw
+                type: u1
+              - size: num_chars * 24
+                if: has_path
+            instances:
+              has_path:
+                value: has_path_raw != 0
           style_record:
             seq:
               - id: st_flag_1
