@@ -2541,15 +2541,27 @@ types:
                   url_id:
                     value: url_id_raw.to_i
       text_language:
-        doc-ref: https://www.ibm.com/docs/en/cics-ts/5.5?topic=development-national-language-codes-application
             seq:
-          - id: len
+          - id: value_old
+            size: 4
+            type: strz
+            encoding: ascii
+            if: _root.version < 1300
+
+          - id: value_new_len_raw
                 type: u4
-              - id: value
+            if: _root.version >= 1300
+          - id: value_new
+            doc-ref: https://www.ibm.com/docs/en/cics-ts/5.5?topic=development-national-language-codes-application
+            size: value_new_len * 2
             type: str
             encoding: UTF-16LE
-            size: len * 2
             if: _root.version >= 1300
+        instances:
+          value_new_len:
+            value: '_root.version >= 1300 ? value_new_len_raw : 0'
+          value:
+            value: '_root.version >= 1300 ? value_new : value_old'
   urls_chunk_data:
     seq:
       - id: text
