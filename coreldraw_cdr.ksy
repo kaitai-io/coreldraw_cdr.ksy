@@ -1917,7 +1917,9 @@ types:
       - id: font_encoding
         type: u2
         enum: text_encoding
-      - size: 14
+      - id: style_flags
+        type: text_style_flags
+      - size: 10
       - id: font_name
         size-eos: true
   stlt_chunk_data:
@@ -3121,10 +3123,9 @@ types:
   text_style_flags:
     doc-ref: https://community.coreldraw.com/sdk/api/draw/17/c/structfontproperties
     seq:
-      - id: emphasis_raw
-        type: u2
-      - id: unknown
-        type: b2
+      - id: style
+        type: b18
+        enum: font_style
       - id: underline
         type: b3
         enum: font_line
@@ -3193,3 +3194,23 @@ enums:
     0xde: thai                      # cp874
     0xee: latin_ii_central_european # cp1250
     0xff: oem_latin_i
+  font_style:
+    0x0000_0000: normal
+    0x0000_0001: bold
+    0x0000_0002: italic
+    0x0000_0004: bold_italic
+    0x0000_0008: thin
+    0x0000_0010: thin_italic
+    0x0000_0020: extra_light
+    0x0000_0040: extra_light_italic
+    0x0000_0080: medium
+    0x0000_0100: medium_italic
+    0x0000_0200: semi_bold
+    0x0000_0400: semi_bold_italic
+    0x0000_0800: extra_bold
+    0x0000_1000: extra_bold_italic
+    0x0000_2000: heavy
+    0x0000_4000: heavy_italic
+    0x0000_8000: mixed
+    0x0001_0000: light
+    0x0001_0000: light_italic
