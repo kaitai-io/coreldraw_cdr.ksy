@@ -3134,9 +3134,9 @@ types:
       - id: strike_through_line
         type: b3
         enum: font_line
-      - id: script
+      - id: position
         type: b2
-        enum: script_type
+        enum: font_position
       - type: b3
     instances:
       italic:
@@ -3154,7 +3154,10 @@ types:
         5: double_thin
         6: double_thin_word
         7: mixed
-      script_type:
+      # NOTE: https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontposition has subscript at 1
+      # and superscript at 2, but that doesn't agree with sample files - the interpretation below
+      # does.
+      font_position:
         0: none
         1: superscript
         2: subscript
