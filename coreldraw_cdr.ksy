@@ -2093,9 +2093,9 @@ types:
           - size: 24
         instances:
           inter_line_spacing:
-            value: 'inter_line_spacing_raw.as<f8> / 1000000'
+            value: 'inter_line_spacing_raw / 1000000.0'
           inter_char_spacing:
-            value: 'inter_char_spacing_raw.as<f8> / 1000000'
+            value: 'inter_char_spacing_raw / 1000000.0'
       bullet:
         seq:
           - size: 40
@@ -2220,7 +2220,7 @@ types:
           - type: skip_1
             # libcdr checks for versions <= 700 instead, which is odd because it would include
             # version 700 but not minor version updates like 701. The simplest explanation is that
-            # it's supposed to be <800.
+            # it's supposed to be < 800.
             if: _root.version < 800
           - id: num_frames
             type: u4
@@ -2408,7 +2408,7 @@ types:
           - id: frame_flag_raw
             type: u4
           - size: 32
-          # In most cases, these bytes are set to 1700 or 1800. The only other value I have seen so
+          # In most cases, this field is set to 1700 or 1800. The only other value I have seen so
           # far is 1600, and the presence of that value seems to correlate with a different layout
           # in 'paragraph.'
           - id: style_layout_version
@@ -2508,7 +2508,7 @@ types:
               - size: 16
               - id: t_len
                 type: u4
-              - size: '(_root.version > 1600) ? t_len : (t_len * 2)'
+              - size: '_root.version > 1600 ? t_len : t_len * 2'
       char_description:
         seq:
           - id: flags
@@ -2533,7 +2533,7 @@ types:
           - id: url_id_new
             size: url_id_len
             type: str
-            encoding: ascii
+            encoding: ASCII
             if: _root.version >= 1700
         instances:
           url_id_raw:
@@ -2545,21 +2545,19 @@ types:
           - id: value_old
             size: 4
             type: strz
-            encoding: ascii
+            encoding: ASCII
             if: _root.version < 1300
 
-          - id: value_new_len_raw
+          - id: value_new_len
             type: u4
             if: _root.version >= 1300
           - id: value_new
-            doc-ref: https://www.ibm.com/docs/en/cics-ts/5.5?topic=development-national-language-codes-application
-            size: value_new_len * 2
+            size: value_new_len.as<u4> * 2
             type: str
             encoding: UTF-16LE
             if: _root.version >= 1300
+            doc-ref: https://www.ibm.com/docs/en/cics-ts/5.5?topic=development-national-language-codes-application
         instances:
-          value_new_len:
-            value: '_root.version >= 1300 ? value_new_len_raw : 0'
           value:
             value: '_root.version >= 1300 ? value_new : value_old'
   urls_chunk_data:
