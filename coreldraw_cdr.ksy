@@ -3141,11 +3141,6 @@ types:
 
       # NOTE: At least two bits of this field correspond to https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontcase
       - type: b3
-    instances:
-      italic:
-        value: emphasis_raw == 0x0080 or emphasis_raw == 0x2000
-      bold:
-        value: emphasis_raw == 0x1000 or emphasis_raw == 0x2000
     enums:
       # https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontline
       font_line:
