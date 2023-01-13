@@ -3126,13 +3126,13 @@ types:
         type: b2
       - id: underline
         type: b3
-        enum: decoration
+        enum: font_line
       - id: overline
         type: b3
-        enum: decoration
+        enum: font_line
       - id: strike_through_line
         type: b3
-        enum: decoration
+        enum: font_line
       - id: script
         type: b2
         enum: script_type
@@ -3143,7 +3143,8 @@ types:
       bold:
         value: emphasis_raw == 0x1000 or emphasis_raw == 0x2000
     enums:
-      decoration:
+      # https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontline
+      font_line:
         0: none
         1: single_thin
         2: single_thin_word
@@ -3151,6 +3152,7 @@ types:
         4: single_thick_word
         5: double_thin
         6: double_thin_word
+        7: mixed
       script_type:
         0: none
         1: superscript
