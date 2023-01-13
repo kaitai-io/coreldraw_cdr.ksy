@@ -3137,6 +3137,8 @@ types:
       - id: position
         type: b2
         enum: font_position
+
+      # NOTE: At least two bits of this field correspond to https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontcase
       - type: b3
     instances:
       italic:
