@@ -3208,4 +3208,4 @@ enums:
     0x0000_4000: heavy_italic
     0x0000_8000: mixed
     0x0001_0000: light
-    0x0001_0000: light_italic
+    0x0002_0000: light_italic
