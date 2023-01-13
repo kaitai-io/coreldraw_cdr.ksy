@@ -3135,9 +3135,9 @@ types:
       - id: strike_through_line
         type: b3
         enum: font_line
-      - id: position
+      - id: script
         type: b2
-        enum: font_position
+        enum: script_type
 
       # NOTE: At least two bits of this field correspond to https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontcase
       - type: b3
@@ -3155,7 +3155,7 @@ types:
       # NOTE: https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontposition has subscript at 1
       # and superscript at 2, but that doesn't agree with sample files - the interpretation below
       # does.
-      font_position:
+      script_type:
         0: none
         1: superscript
         2: subscript
