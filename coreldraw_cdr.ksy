@@ -3119,6 +3119,7 @@ types:
             - SVGColor # file name (SVGColor.xml)
           doc: SVG Colors
   text_style_flags:
+    doc-ref: https://community.coreldraw.com/sdk/api/draw/17/c/structfontproperties
     seq:
       - id: emphasis_raw
         type: u2
