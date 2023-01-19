@@ -2410,11 +2410,15 @@ types:
           - id: frame_flag_raw
             type: u4
           - size: 32
-          # In most cases, this field is set to 1700 or 1800. The only other value I have seen so
-          # far is 1600, and the presence of that value seems to correlate with a different layout
-          # in 'paragraph.'
           - id: style_layout_version
             type: u2
+            doc: |
+              seen values:
+
+              * 1500
+              * 1600
+              * 1700
+              * 1800
           - size: 3
           - id: num_frames
             type: u4
@@ -2462,7 +2466,7 @@ types:
                 if: flag == 1
               - id: paragraph_style
                 type: style_string
-                if: _parent.style_layout_version < 1700
+                if: _parent.style_layout_version < 1700 and not _parent.frame_flag
               - id: default_style
                 type: style_string
               - id: num_records
