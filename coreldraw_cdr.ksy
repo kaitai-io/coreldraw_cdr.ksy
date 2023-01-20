@@ -2106,6 +2106,7 @@ types:
         seq:
           - size: 40
           - size: 4
+          # NOTE: libcdr checks for versions > 1300 instead, which seems like a mistake.
             if: _root.version >= 1400
 
           - id: indicator_x3
@@ -2233,9 +2234,7 @@ types:
           - size: 1
             if: _root.version >= 1500
           - type: skip_1
-            # libcdr checks for versions <= 700 instead, which is odd because it would include
-            # version 700 but not minor version updates like 701. The simplest explanation is that
-            # it's supposed to be < 800.
+            # NOTE: libcdr checks for versions <= 700 instead, which seems like a mistake.
             if: _root.version < 800
           - id: num_frames
             type: u4
@@ -2268,6 +2267,7 @@ types:
                 type: u4
               - size: 48
               - type: skip_2
+                # NOTE: libcdr checks for versions > 700 instead, which seems like a mistake.
                 if: _root.version >= 800
               - size: |
                   _root.version >= 1500
@@ -2301,6 +2301,7 @@ types:
                     seq:
                       - size: 4
                       - size: 8
+                        # NOTE: libcdr checks for versions > 1200 instead, which seems like a mistake.
                         if: _root.version >= 1300
                       - size: 28
                       - size: 8
@@ -2311,6 +2312,7 @@ types:
                 type: u4
               - size: 1
               - size: 1
+                # NOTE: libcdr checks for versions > 1200 instead, which seems like a mistake.
                 if: _root.version >= 1300 and _parent.frame_flag
               - id: num_styles
                 type: u4
@@ -2527,6 +2529,7 @@ types:
               - size: 16
               - id: t_len
                 type: u4
+                # NOTE: libcdr checks for versions > 1600 instead, which seems like a mistake.
               - size: '_root.version >= 1700 ? t_len : t_len * 2'
       char_description:
         seq:
