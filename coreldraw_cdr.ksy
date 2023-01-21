@@ -11,6 +11,7 @@ meta:
     wikidata: Q939636
   encoding: ASCII
   endian: le
+  bit-endian: le
 doc: |
   A native file format of CorelDRAW.
 
@@ -230,12 +231,13 @@ types:
             # '"iccd"': iccd_chunk_data
             '"bbox"': bbox_chunk_data
             '"obbx"': obbx_chunk_data
-            # '"spnd"': spnd_chunk_data
+            '"spnd"': spnd_chunk_data
             '"uidr"': uidr_chunk_data
             # '"vpat"': vpat_chunk_data
-            # '"font"': font_chunk_data
+            '"font"': font_chunk_data
             '"stlt"': stlt_chunk_data
-            # '"txsm"': txsm_chunk_data
+            '"txsm"': txsm_chunk_data
+            '"urls"': urls_chunk_data
             # '"udta"': udta_chunk_data
             # '"styd"': styd_chunk_data
 
@@ -1893,7 +1895,14 @@ types:
         type: coord
       - id: p3_y
         type: coord
-  # spnd_chunk_data: {}
+  spnd_chunk_data:
+    seq:
+      - id: spnd
+        type:
+          switch-on: _root.precision_16bit
+          cases:
+            true: u2
+            _: u4
   uidr_chunk_data:
     seq:
       - id: color_id
@@ -1905,7 +1914,18 @@ types:
       - id: color
         type: color
   # vpat_chunk_data: {}
-  # font_chunk_data: {}
+  font_chunk_data:
+    seq:
+      - id: font_id
+        type: u2
+      - id: font_encoding
+        type: u2
+        enum: text_encoding
+      - id: style_flags
+        type: text_style_flags
+      - size: 10
+      - id: font_name
+        size-eos: true
   stlt_chunk_data:
     doc-ref: https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2194
     seq:
@@ -1952,8 +1972,10 @@ types:
 
           - id: num_intervals
             type: u4
-          - id: intervals_raw
-            size: 52 * num_intervals
+          - id: intervals
+            type: interval
+            repeat: expr
+            repeat-expr: num_intervals
 
           - id: num_set5s
             type: u4
@@ -2038,7 +2060,7 @@ types:
             value: 'sizeof<u4> + 12 + (_root.precision_16bit ? sizeof<s2> : sizeof<s4>) * 3'
 
           has_set11s:
-            value: _root.version > 800
+            value: _root.version >= 801
       entry:
         seq:
           - id: id
@@ -2055,15 +2077,37 @@ types:
             type: u2
           - id: font_encoding
             type: u2
+            enum: text_encoding
           - size: 8
           - id: font_size
             type: coord
-          - size: '_root.version < 1000 ? 12 : 20'
+          - size: 8
+          - id: style_flags
+            type: text_style_flags
+          - size: 8
+            if: '_root.version >= 1000'
+      interval:
+        seq:
+          - id: id
+            type: u4
+          - size: 8
+          - id: inter_char_spacing_raw
+            type: u4
+          - size: 8
+          - id: inter_line_spacing_raw
+            type: u4
+          - size: 24
+        instances:
+          inter_line_spacing:
+            value: 'inter_line_spacing_raw / 1000000.0'
+          inter_char_spacing:
+            value: 'inter_char_spacing_raw / 1000000.0'
       bullet:
         seq:
           - size: 40
           - size: 4
-            if: _root.version > 1300
+          # NOTE: libcdr checks for versions > 1300 instead, which seems like a mistake.
+            if: _root.version >= 1400
 
           - id: indicator_x3
             type: u4
@@ -2121,15 +2165,464 @@ types:
             type: u4
           - id: outl_id
             type: u4
-          # FIXME: this actually has a known structure (https://github.com/LibreOffice/libcdr/blob/b14f6a1f17652aa842b23c66236610aea5233aa6/src/lib/CDRParser.cpp#L2352-L2368),
-          # but it's not important to me right now
-          - size: |
-              (num > 1 ? sizeof<u4> * 4 + (_parent.mapping_section.has_set11s ? sizeof<u4> : 0) : 0) +
-              (num > 2 ? sizeof<u4> * 5 : 0)
+          - id: ext_font_properties_1
+            type: extended_font_properties_1
+            if: num > 1
+          - id: ext_font_properties_2
+            type: extended_font_properties_2
+            if: num > 2
         instances:
           name:
             value: '_root.version >= 1200 ? name_new : name_old'
-  # txsm_chunk_data: {}
+      extended_font_properties_1:
+        seq:
+          - id: font_rec_id
+            type: u4
+          - id: align_id
+            type: u4
+          - id: interval_id
+            type: u4
+          - id: set5_id
+            type: u4
+          - id: set11_id
+            type: u4
+            if: _parent._parent.mapping_section.has_set11s
+      extended_font_properties_2:
+        seq:
+          - id: tab_id
+            type: u4
+          - id: bullet_id
+            type: u4
+          - id: indent_id
+            type: u4
+          - id: hyphen_id
+            type: u4
+          - id: drop_cap_id
+            type: u4
+  txsm_chunk_data:
+    seq:
+      - id: body
+        type:
+          switch-on: |
+            _root.version < 500
+              ? 0 :
+            _root.version < 600
+              ? 5 :
+            _root.version < 700
+              ? 6 :
+            _root.version >= 1600
+              ? 16
+              : 7
+          cases:
+            0: txsm_0
+            5: txsm_5
+            6: txsm_6
+            7: txsm_7
+            16: txsm_16
+    types:
+      txsm_0:
+        seq: []
+      txsm_5:
+        seq: []
+      txsm_6:
+        seq: []
+      txsm_7:
+        seq:
+          - id: frame_flag_raw
+            type: u4
+          - size: 32
+          - size: 1
+            if: _root.version >= 1500
+          - type: skip_1
+            # NOTE: libcdr checks for versions <= 700 instead, which seems like a mistake.
+            if: _root.version < 800
+          - id: num_frames
+            type: u4
+          - id: frames
+            type: frame
+            repeat: expr
+            repeat-expr: num_frames
+          - id: num_paragraphs
+            type: u4
+          - id: paragraphs
+            type: paragraph
+            repeat: expr
+            repeat-expr: num_paragraphs
+        instances:
+          frame_flag:
+            value: frame_flag_raw != 0
+        types:
+          skip_1:
+            seq:
+              - id: text_on_path_raw
+                type: u4
+              - size: 32
+                if: text_on_path
+            instances:
+              text_on_path:
+                value: text_on_path_raw != 0
+          frame:
+            seq:
+              - id: frame_id
+                type: u4
+              - size: 48
+              - type: skip_2
+                # NOTE: libcdr checks for versions > 700 instead, which seems like a mistake.
+                if: _root.version >= 800
+              - size: |
+                  _root.version >= 1500
+                    ? 40 :
+                  _root.version >= 1400
+                    ? 36 :
+                  _root.version >= 801
+                    ? 34 :
+                  _root.version == 800
+                    ? 32 :
+                  _root.version >= 700
+                    ? 36
+                    : 0
+                if: not _parent.frame_flag
+              - size: 4
+                if: _parent.frame_flag and _root.version >= 1500
+            types:
+              skip_2:
+                seq:
+                  - id: text_on_path_raw
+                    type: u4
+                  - type: skip_3
+                    if: text_on_path
+                  - size: 8
+                    if: not text_on_path and _root.version >= 1500
+                instances:
+                  text_on_path:
+                    value: text_on_path_raw != 0
+                types:
+                  skip_3:
+                    seq:
+                      - size: 4
+                      - size: 8
+                        # NOTE: libcdr checks for versions > 1200 instead, which seems like a mistake.
+                        if: _root.version >= 1300
+                      - size: 28
+                      - size: 8
+                        if: _root.version >= 1500
+          paragraph:
+            seq:
+              - id: style_id
+                type: u4
+              - size: 1
+              - size: 1
+                # NOTE: libcdr checks for versions > 1200 instead, which seems like a mistake.
+                if: _root.version >= 1300 and _parent.frame_flag
+              - id: num_styles
+                type: u4
+              - id: styles
+                type: style
+                repeat: expr
+                repeat-expr: num_styles
+              - id: num_chars
+                type: u4
+              - id: char_descriptions
+                type: char_description
+                repeat: expr
+                repeat-expr: num_chars
+              - id: num_bytes_in_text_raw
+                type: u4
+                if: _root.version >= 1200
+              - id: text_data
+                size: num_bytes_in_text
+              - id: has_path_raw
+                type: u1
+              - size: num_chars * 24
+                if: has_path
+            instances:
+              num_bytes_in_text:
+                value: '_root.version >= 1200 ? num_bytes_in_text_raw : num_chars'
+              has_path:
+                value: has_path_raw != 0
+            types:
+              style:
+                seq:
+                  - id: num_chars
+                    type: u2
+                  - id: has_font
+                    type: b1 # 0x01
+                  - id: has_style_flags
+                    type: b1 # 0x02
+                  - id: has_font_size
+                    type: b1 # 0x04
+                  - id: has_unknown # "// assumption" in libcdr
+                    type: b1 # 0x08
+                  - id: has_offset_x
+                    type: b1 # 0x10
+                  - id: has_offset_y
+                    type: b1 # 0x20
+                  - id: has_font_color
+                    type: b1 # 0x40
+                  - id: has_outl_id
+                    type: b1 # 0x80
+                  - id: fl3_maybe
+                    type: u1
+                    if: _root.version >= 800
+                  - id: font
+                    type: font_data
+                    if: has_font
+                  - id: style_flags
+                    type: text_style_flags
+                    if: has_style_flags
+                  - id: font_size
+                    type: coord
+                    if: has_font_size
+                  - size: 4
+                    if: has_unknown
+                  - size: 4
+                    if: has_offset_x
+                  - size: 4
+                    if: has_offset_y
+                  - id: font_color
+                    type: font_color_data
+                    if: has_font_color
+                  - id: outl_id
+                    type: u4
+                    if: has_outl_id
+                  - id: url_properties
+                    type: url_props
+                    if: (fl3 & 0x02) != 0
+                  - id: locale
+                    type: text_locale
+                    if: (fl3 & 0x08) != 0
+                  - type: skip_5
+                    if: (fl3 & 0x20) != 0
+                instances:
+                  fl3:
+                    value: '_root.version >= 800 ? fl3_maybe : 0'
+                types:
+                  font_data:
+                    seq:
+                      - id: font_id
+                        type: u2
+                      - id: encoding
+                        type: u2
+                        enum: text_encoding
+                  font_color_data:
+                    seq:
+                      - id: fill_id
+                        type: u4
+                      - size: 48
+                        if: _root.version >= 1300
+                  skip_5:
+                    seq:
+                      - size: '_root.version >= 1500 ? 52 : 4'
+                        if: flag != 0
+                    instances:
+                      ofs_flag:
+                        value: _io.pos
+                      flag:
+                        pos: ofs_flag
+                        type: u1
+      txsm_16:
+        seq:
+          - id: frame_flag_raw
+            type: u4
+          - size: 32
+          - id: style_layout_version
+            type: u2
+            doc: |
+              seen values:
+
+              * 1500
+              * 1600
+              * 1700
+              * 1800
+          - size: 3
+          - id: num_frames
+            type: u4
+          - id: frames
+            type: frame
+            repeat: expr
+            repeat-expr: num_frames
+          - id: num_paragraphs
+            type: u4
+          - id: paragraphs
+            type: paragraph
+            repeat: expr
+            repeat-expr: num_paragraphs
+        instances:
+          frame_flag:
+            value: frame_flag_raw != 0
+        types:
+          frame:
+            seq:
+              - id: frame_id
+                type: u4
+              - size: 48
+              - id: text_on_path_raw
+                type: u4
+              - size: 40
+                if: text_on_path
+              - size: 8
+              - type: skip
+                if: not _parent.frame_flag
+            instances:
+              text_on_path:
+                value: text_on_path_raw != 0
+          paragraph:
+            seq:
+              - id: style_id
+                type: u4
+              - size: 1
+              - id: flag
+                type: u1
+                if: _parent.frame_flag
+              # This section of unknown use is not accounted for by libcdr, but it might have something to do with
+              # curved text.
+              # The size and condition below are a guess based on just one sample input file.
+              - size: 64
+                if: flag == 1
+              - id: paragraph_style
+                type: style_string
+                if: _parent.style_layout_version < 1700 and not _parent.frame_flag
+              - id: default_style
+                type: style_string
+              - id: num_records
+                type: u4
+              - id: style_records
+                type: style_record
+                repeat: expr
+                repeat-expr: num_records
+              - id: num_chars
+                type: u4
+              - id: char_descriptions
+                type: char_description
+                repeat: expr
+                repeat-expr: num_chars
+              - id: num_bytes_in_text
+                type: u4
+              - id: text_data
+                size: num_bytes_in_text
+              - id: has_path_raw
+                type: u1
+              - size: num_chars * 24
+                if: has_path
+            instances:
+              has_path:
+                value: has_path_raw != 0
+          style_record:
+            seq:
+              - id: st_flag_1
+                type: u2
+              - id: st_flag_2
+                type: u2
+              - id: st_flag_3
+                type: u2
+              - id: url_properties
+                type: url_props
+                if: st_flag_2 == 0x3fff and (st_flag_3 & 0x11) == 0x11
+              - id: locale
+                type: text_locale
+                if: (st_flag_3 & 0x04) != 0
+              - id: style
+                type: style_string
+                if: st_flag_2 != 0 or (st_flag_3 & 0x04) != 0
+          skip:
+            seq:
+              - size: 16
+              - id: t_len
+                type: u4
+                # NOTE: libcdr checks for versions > 1600 instead, which seems like a mistake.
+              - size: '_root.version >= 1700 ? t_len : t_len * 2'
+      char_description:
+        seq:
+          - id: flags
+            type: u2
+          - id: style_override_idx_raw
+            type: u1
+          - size: 1 # usually 0x00, but can also be 0x20, 0x40 or 0x60
+          - size: 4
+            if: _root.version >= 1200
+        instances:
+          style_override_idx:
+            value: style_override_idx_raw >> 1
+      url_props:
+        seq:
+          - id: url_id_len
+            type: u4
+          - id: url_id_old
+            size: url_id_len * 2
+            type: str
+            encoding: UTF-16LE
+            if: _root.version < 1700
+          - id: url_id_new
+            size: url_id_len
+            type: str
+            encoding: ASCII
+            if: _root.version >= 1700
+        instances:
+          url_id_raw:
+            value: '_root.version < 1700 ? url_id_old : url_id_new'
+          url_id:
+            value: url_id_raw.to_i
+      text_locale:
+        seq:
+          - id: country_code
+            size: 4
+            type: strz
+            encoding: ASCII
+            if: _root.version < 1300
+            doc: |
+              Based on sample files, this contains a 2-character code representing a country, or national language. The
+              values do not exactly follow any known standard or de-facto standard.
+
+              Seen values:
+
+              * US
+              * RU
+              * GR
+              * EN
+              * CE
+
+          - id: language_code_len
+            type: u4
+            if: _root.version >= 1300
+          - id: language_code
+            size: language_code_len.as<u4> * 2
+            type: str
+            encoding: UTF-16LE
+            if: _root.version >= 1300
+            doc-ref: https://www.ibm.com/docs/en/cics-ts/5.5?topic=development-national-language-codes-application
+  urls_chunk_data:
+    seq:
+      - id: text
+        type: text_type
+    types:
+      text_type:
+        seq:
+          - id: value_old
+            size-eos: true
+            type: strz
+            # not accurate, but best we can do here (in fact, it reflects the
+            # https://en.wikipedia.org/wiki/Windows_code_page#ANSI_code_page
+            # based on the currently set system locale, at least on Windows)
+            encoding: windows-1252
+            if: _root.version < 1200
+          - id: value_new
+            size-eos: true
+            # FIXME: should be `type: strz` but Kaitai Struct doesn't support it for
+            # UTF-16 yet, see https://github.com/kaitai-io/kaitai_struct/issues/187
+            type: str
+            encoding: UTF-16LE
+            if: _root.version >= 1200
+        instances:
+          value:
+            # a poor man's workaround for `value_new` not being properly parsed
+            # as null-terminated (but I believe this actually works fine for
+            # .cdr files generated by CorelDRAW)
+            value: |
+              _root.version >= 1200 ? (
+                value_new.substring(value_new.length - 1, value_new.length) == [0x00, 0x00].to_s('UTF-16LE')
+                  ? value_new.substring(0, value_new.length - 1)
+                  : value_new
+              ) : value_old
   # udta_chunk_data: {}
   # styd_chunk_data: {}
 
@@ -2655,3 +3148,93 @@ types:
             - cdrSVGPalette
             - SVGColor # file name (SVGColor.xml)
           doc: SVG Colors
+  text_style_flags:
+    doc-ref: https://community.coreldraw.com/sdk/api/draw/17/c/structfontproperties
+    seq:
+      - id: style
+        type: b18
+        enum: font_style
+      - id: underline
+        type: b3
+        enum: font_line
+      - id: overline
+        type: b3
+        enum: font_line
+      - id: strike_through_line
+        type: b3
+        enum: font_line
+      - id: script
+        type: b2
+        enum: script_type
+
+      # NOTE: At least two bits of this field correspond to https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontcase
+      - type: b3
+    enums:
+      # https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontline
+      font_line:
+        0: none
+        1: single_thin
+        2: single_thin_word
+        3: single_thick
+        4: single_thick_word
+        5: double_thin
+        6: double_thin_word
+        7: mixed
+      # NOTE: https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontposition has subscript at 1
+      # and superscript at 2, but that doesn't agree with sample files - the interpretation below
+      # does.
+      script_type:
+        0: none
+        1: superscript
+        2: subscript
+  style_string:
+    seq:
+      - id: len_raw
+        type: u4
+      - id: value
+        size: len
+    instances:
+      len:
+        value: '_root.version < 1700 ? len_raw * 2 : len_raw'
+enums:
+  text_encoding:
+    0x00: latin                     # cp1252
+    0x01: system_default
+    0x02: symbol
+    0x4d: apple_roman               # cp10000 ?
+    0x80: japanese_shift_jis        # cp932
+    0x81: korean_hangul             # cp949
+    0x82: korean_johab              # cp1361
+    0x86: chinese_simplified_gbk    # cp936
+    0x88: chinese_traditional_big5  # cp950
+    0xa1: greek                     # cp1253
+    0xa2: turkish                   # cp1254
+    0xa3: vietnamese                # cp1258
+    0xb1: hebrew                    # cp1255
+    0xb2: arabic                    # cp1256
+    0xba: baltic                    # cp1257
+    0xcc: cyrillic                  # cp1251
+    0xde: thai                      # cp874
+    0xee: latin_ii_central_european # cp1250
+    0xff: oem_latin_i
+  # https://community.coreldraw.com/sdk/api/draw/17/e/cdrfontstyle
+  font_style:
+    0x0000_0000: mixed
+    0x0000_0001: thin
+    0x0000_0002: thin_italic
+    0x0000_0004: extra_light
+    0x0000_0008: extra_light_italic
+    0x0000_0010: light
+    0x0000_0020: light_italic
+    0x0000_0040: normal
+    0x0000_0080: italic
+    0x0000_0100: medium
+    0x0000_0200: medium_italic
+    0x0000_0400: semi_bold
+    0x0000_0800: semi_bold_italic
+    0x0000_1000: bold
+    0x0000_2000: bold_italic
+    0x0000_4000: extra_bold
+    0x0000_8000: extra_bold_italic
+    0x0001_0000: heavy
+    0x0002_0000: heavy_italic
