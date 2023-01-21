@@ -2383,7 +2383,7 @@ types:
                     type: font_color_data
                     if: has_font_color
                   - id: outl_id
-                    size: 4
+                    type: u4
                     if: has_outl_id
                   - id: url_properties
                     type: url_props
@@ -2407,7 +2407,7 @@ types:
                   font_color_data:
                     seq:
                       - id: fill_id
-                        size: 4
+                        type: u4
                       - size: 48
                         if: _root.version >= 1300
                   skip_5:
