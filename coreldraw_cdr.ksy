@@ -2388,8 +2388,8 @@ types:
                   - id: url_properties
                     type: url_props
                     if: (fl3 & 0x02) != 0
-                  - id: language
-                    type: text_language
+                  - id: locale
+                    type: text_locale
                     if: (fl3 & 0x08) != 0
                   - type: skip_5
                     if: (fl3 & 0x20) != 0
@@ -2518,8 +2518,8 @@ types:
               - id: url_properties
                 type: url_props
                 if: st_flag_2 == 0x3fff and (st_flag_3 & 0x11) == 0x11
-              - id: language
-                type: text_language
+              - id: locale
+                type: text_locale
                 if: (st_flag_3 & 0x04) != 0
               - id: style
                 type: style_string
@@ -2562,26 +2562,34 @@ types:
             value: '_root.version < 1700 ? url_id_old : url_id_new'
           url_id:
             value: url_id_raw.to_i
-      text_language:
+      text_locale:
         seq:
-          - id: value_old
+          - id: country_code
             size: 4
             type: strz
             encoding: ASCII
             if: _root.version < 1300
+            doc: |
+              Based on sample files, this contains a 2-character code representing a country, or national language. The
+              values do not exactly follow any known standard or de-facto standard.
 
-          - id: value_new_len
+              Seen values:
+
+              * US
+              * RU
+              * GR
+              * EN
+              * CE
+
+          - id: language_code_len
             type: u4
             if: _root.version >= 1300
-          - id: value_new
-            size: value_new_len.as<u4> * 2
+          - id: language_code
+            size: language_code_len.as<u4> * 2
             type: str
             encoding: UTF-16LE
             if: _root.version >= 1300
             doc-ref: https://www.ibm.com/docs/en/cics-ts/5.5?topic=development-national-language-codes-application
-        instances:
-          value:
-            value: '_root.version >= 1300 ? value_new : value_old'
   urls_chunk_data:
     seq:
       - id: text
