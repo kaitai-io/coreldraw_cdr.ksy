@@ -93,9 +93,23 @@ types:
   cdr_chunk_data:
     seq:
       - id: form_type
-        contents: CDR
+        type: str
+        size: 3
+        valid:
+          any-of:
+            # Used by CDR 8.0 Bidi files, and the following sample files in CorelDRAW 6:
+            # DRAW/SAMPLES/{6EFFECTS.CDR,WISHLIST.CDR}
+            # http://fileformats.archiveteam.org/wiki/CorelDRAW
+            - '"cdr"'
+            # Used by all other known CDR files
+            - '"CDR"'
       - id: c
         type: u1
+        valid:
+          # A value of 'X' (as in "CDRX" if you concatenate `form_type` and `c` together) means
+          # that this is actually a CCX file.
+          # http://fileformats.archiveteam.org/wiki/CCX_(Corel)
+          expr: 'c != 0x58'
       - id: chunks
         type: chunks_normal
         size-eos: true
@@ -103,6 +117,8 @@ types:
       version:
         doc-ref: https://github.com/LibreOffice/libcdr/blob/4b28c1a10f06e0a610d0a740b8a5839dcec9dae4/src/lib/CDRParser.cpp#L38-L49
         value: >-
+          form_type == "cdr" and c == 0x38
+            ? 801 :
           c == 0x20
             ? 300 :
           c < 0x31
