@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+set -Eefuo pipefail
 
 # Simple utility for dumping unpacked streams from a CorelDRAW .cdr file
 # into a .unpk file described by the cdr_unpk.ksy spec
