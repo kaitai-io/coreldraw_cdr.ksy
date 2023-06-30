@@ -11,8 +11,7 @@ print_file_size()
 
 [ -f "$1" ] || { echo "Error: '$1' is not an accessible file path" >&2 ; exit 1; }
 cdr_basename=$(basename "$1")
-cdr_basename=${cdr_basename%.[cC][dD][rR]}
-output_file="$(dirname "$1")/$cdr_basename.cdr.unpk"
+output_file="$(dirname "$1")/$cdr_basename.unpk"
 
 mime_type=$(file "$1" -b --mime-type)
 
