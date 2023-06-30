@@ -9,11 +9,13 @@ print_file_size()
     echo "$1 size: $2 ($(LC_ALL=C numfmt --to=iec-i --suffix=B --format='%.1f' "$2"))"
 }
 
-[ -f "$1" ] || { echo "Error: '$1' is not an accessible file path" >&2 ; exit 1; }
-cdr_basename=$(basename "$1")
-output_file="$(dirname "$1")/$cdr_basename.unpk"
+f=$1
 
-mime_type=$(file "$1" -b --mime-type)
+[ -f "$f" ] || { echo "Error: '$f' is not an accessible file path" >&2 ; exit 1; }
+cdr_basename=$(basename "$f")
+output_file="$(dirname "$f")/$cdr_basename.unpk"
+
+mime_type=$(file "$f" -b --mime-type)
 
 if [[
     $mime_type == 'application/zip' # X4-X6 with no 'mimetype' file in file-5.42, >=X4 in older versions of file(1)
@@ -21,9 +23,9 @@ if [[
     || $mime_type == 'application/x-vnd.corel.zcf.draw.document+zip' # >=X7 in file-5.42
 ]]
 then
-    extract_dir=$(dirname "$1")/$cdr_basename
+    extract_dir=$(dirname "$f")/$cdr_basename
     mkdir -p "$extract_dir/content"
-    unzip -q -j "$1" 'content/*' -d "$extract_dir/content"
+    unzip -q -j "$f" 'content/*' -d "$extract_dir/content"
 
     if [ -f "$extract_dir/content/riffData.cdr" ]
     then
@@ -49,7 +51,7 @@ then
     then
         [ -f "$extract_dir/content/dataFileList.dat" ] || { echo "Error: file 'content/dataFileList.dat' does not exist in the archive" >&2 ; exit 1; }
         mkdir -p "$extract_dir/content/data"
-        unzip -j "$1" 'content/data/*' -d "$extract_dir/content/data"
+        unzip -j "$f" 'content/data/*' -d "$extract_dir/content/data"
 
         while IFS= read -r line || [[ -n $line ]]
         do
@@ -80,21 +82,21 @@ then
     final_size=$(wc -c < "$output_file")
     print_file_size "Done, output file: '$output_file'," "$final_size"
 
-elif [[ $(file "$1" -b) == 'RIFF (little-endian) data'* ]]
+elif [[ $(file "$f" -b) == 'RIFF (little-endian) data'* ]]
 then
     printf '%s' 'unpk' > "$output_file"
-    root_size=$(wc -c < "$1")
+    root_size=$(wc -c < "$f")
     if [[ $root_size -gt 4294967295 ]]
     then
-        echo "Error: root file '$1' has $root_size bytes, maximum supported is 4294967295 bytes" >&2
+        echo "Error: root file '$f' has $root_size bytes, maximum supported is 4294967295 bytes" >&2
         exit 1
     fi
     printf '%.8x' "$root_size" | xxd -r -p >> "$output_file"
-    cat "$1" >> "$output_file"
+    cat "$f" >> "$output_file"
 
     final_size=$(wc -c < "$output_file")
     print_file_size "Done, output file: '$output_file'," "$final_size"
 else
-    echo "Error: not a CDR format at all (\`file\` says '$(file "$1" -b)'), stopping" >&2
+    echo "Error: not a CDR format at all (\`file\` says '$(file "$f" -b)')" >&2
     exit 1
 fi
