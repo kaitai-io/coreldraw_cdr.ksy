@@ -8,7 +8,7 @@ print_file_size()
     echo "$1 size: $2 ($(LC_ALL=C numfmt --to=iec-i --suffix=B --format='%.1f' "$2"))"
 }
 
-[ -f "$1" ] || { echo "'$1' is not accessible file path" ; exit 1; }
+[ -f "$1" ] || { echo "'$1' is not accessible file path" >&2 ; exit 1; }
 cdr_basename=$(basename "$1")
 cdr_basename=${cdr_basename%.[cC][dD][rR]}
 output_file="$(dirname "$1")/$cdr_basename.cdr.unpk"
@@ -36,7 +36,7 @@ then
         root_file='content/root.dat'
         echo "  -> has '$root_file' (X6+ version)"
     else
-        echo "there is no 'content/riffData.cdr' or 'content/root.dat' in the ZIP archive"
+        echo "there is no 'content/riffData.cdr' or 'content/root.dat' in the ZIP archive" >&2
         exit 1
     fi
 
@@ -47,13 +47,13 @@ then
 
     if [[ $root_file == 'content/root.dat' ]]
     then
-        [ -f "$extract_dir/content/dataFileList.dat" ] || { echo "file 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
+        [ -f "$extract_dir/content/dataFileList.dat" ] || { echo "file 'content/dataFileList.dat' does not exist in the archive" >&2 ; exit 1; }
         mkdir -p "$extract_dir/content/data"
         unzip -j "$1" 'content/data/*' -d "$extract_dir/content/data"
 
         while IFS= read -r line || [[ -n $line ]]
         do
-            [ -f "$extract_dir/content/data/$line" ] || { echo "file 'content/data/$line' listed in 'content/dataFileList.dat' does not exist in the archive" ; exit 1; }
+            [ -f "$extract_dir/content/data/$line" ] || { echo "file 'content/data/$line' listed in 'content/dataFileList.dat' does not exist in the archive" >&2 ; exit 1; }
             len_name=$(printf '%s' "$line" | wc -c)
             printf '%.2x' "$len_name" | xxd -r -p >> "$output_file"
             printf '%s' "$line" >> "$output_file"
@@ -83,6 +83,6 @@ then
     final_size=$(wc -c < "$output_file")
     print_file_size "Done, output file: '$output_file'," "$final_size"
 else
-    echo "Not CDR format at all (\`file\` says '$(file "$1" -b)'), stopping"
+    echo "Not CDR format at all (\`file\` says '$(file "$1" -b)'), stopping" >&2
     exit 1
 fi
