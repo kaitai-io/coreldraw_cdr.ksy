@@ -38,6 +38,11 @@ then
 
     printf '%s' 'unpk' > "$output_file"
     root_size=$(wc -c < "$extract_dir/$root_file")
+    if [[ $root_size -gt 4294967295 ]]
+    then
+        echo "Error: root file '$root_file' has $root_size bytes, maximum supported is 4294967295 bytes" >&2
+        exit 1
+    fi
     printf '%.8x' "$root_size" | xxd -r -p >> "$output_file"
 
     if [[ $root_file == 'content/root.dat' ]]
@@ -50,10 +55,20 @@ then
         do
             [ -f "$extract_dir/content/data/$line" ] || { echo "Error: file 'content/data/$line' listed in 'content/dataFileList.dat' does not exist in the archive" >&2 ; exit 1; }
             len_name=$(printf '%s' "$line" | wc -c)
+            if [[ $len_name -gt 255 ]]
+            then
+                echo "Warning: file name '$line' ($len_name characters) truncated to 255 characters" >&2
+                len_name=255
+            fi
             printf '%.2x' "$len_name" | xxd -r -p >> "$output_file"
-            printf '%s' "$line" >> "$output_file"
+            printf '%s' "${line:0:$len_name}" >> "$output_file"
 
             file_size=$(wc -c < "$extract_dir/content/data/$line")
+            if [[ $file_size -gt 4294967295 ]]
+            then
+                echo "Error: file 'content/data/$line' has $file_size bytes, maximum supported is 4294967295 bytes" >&2
+                exit 1
+            fi
             printf '%.8x' "$file_size" | xxd -r -p >> "$output_file"
             cat "$extract_dir/content/data/$line" >> "$output_file"
 
@@ -68,8 +83,13 @@ then
 elif [[ $(file "$1" -b) == 'RIFF (little-endian) data'* ]]
 then
     printf '%s' 'unpk' > "$output_file"
-    cdr_size=$(wc -c < "$1")
-    printf '%.8x' "$cdr_size" | xxd -r -p >> "$output_file"
+    root_size=$(wc -c < "$1")
+    if [[ $root_size -gt 4294967295 ]]
+    then
+        echo "Error: root file '$1' has $root_size bytes, maximum supported is 4294967295 bytes" >&2
+        exit 1
+    fi
+    printf '%.8x' "$root_size" | xxd -r -p >> "$output_file"
     cat "$1" >> "$output_file"
 
     final_size=$(wc -c < "$output_file")
