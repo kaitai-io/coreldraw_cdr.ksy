@@ -13,7 +13,6 @@ cdr_basename=$(basename "$1")
 cdr_basename=${cdr_basename%.[cC][dD][rR]}
 output_file="$(dirname "$1")/$cdr_basename.cdr.unpk"
 
-echo "Inspecting file '$1':"
 mime_type=$(file "$1" -b --mime-type)
 
 if [[
@@ -22,19 +21,16 @@ if [[
     || $mime_type == 'application/x-vnd.corel.zcf.draw.document+zip' # >=X7 in file-5.42
 ]]
 then
-    echo "ZIP archive detected"
     extract_dir=$(dirname "$1")/$cdr_basename
     mkdir -p "$extract_dir/content"
-    unzip -j "$1" 'content/*' -d "$extract_dir/content"
+    unzip -q -j "$1" 'content/*' -d "$extract_dir/content"
 
     if [ -f "$extract_dir/content/riffData.cdr" ]
     then
-        root_file='content/riffData.cdr'
-        echo "  -> has '$root_file' (X4 or X5 version)"
+        root_file='content/riffData.cdr' # X4 or X5 version
     elif [ -f "$extract_dir/content/root.dat" ]
     then
-        root_file='content/root.dat'
-        echo "  -> has '$root_file' (X6+ version)"
+        root_file='content/root.dat' # X6+ version
     else
         echo "there is no 'content/riffData.cdr' or 'content/root.dat' in the ZIP archive" >&2
         exit 1
@@ -42,7 +38,6 @@ then
 
     printf '%s' 'unpk' > "$output_file"
     root_size=$(wc -c < "$extract_dir/$root_file")
-    print_file_size "'$root_file'" "$root_size"
     printf '%.8x' "$root_size" | xxd -r -p >> "$output_file"
 
     if [[ $root_file == 'content/root.dat' ]]
@@ -59,7 +54,6 @@ then
             printf '%s' "$line" >> "$output_file"
 
             file_size=$(wc -c < "$extract_dir/content/data/$line")
-            print_file_size "'content/data/$line'" "$file_size"
             printf '%.8x' "$file_size" | xxd -r -p >> "$output_file"
             cat "$extract_dir/content/data/$line" >> "$output_file"
 
@@ -73,10 +67,8 @@ then
 
 elif [[ $(file "$1" -b) == 'RIFF (little-endian) data'* ]]
 then
-    echo "RIFF file detected, assuming CDR pre-X4 version"
     printf '%s' 'unpk' > "$output_file"
     cdr_size=$(wc -c < "$1")
-    print_file_size "'$1'" "$cdr_size"
     printf '%.8x' "$cdr_size" | xxd -r -p >> "$output_file"
     cat "$1" >> "$output_file"
 
