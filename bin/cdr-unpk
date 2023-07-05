@@ -4,99 +4,206 @@ set -Eefuo pipefail
 # Simple utility for dumping unpacked streams from a CorelDRAW .cdr file
 # into a .unpk file described by the cdr_unpk.ksy spec
 
+usage()
+{
+    echo "Usage: $0 [OPTION...] -- FILE..."
+    echo "Unpack CorelDRAW .cdr FILEs to .unpk dumps"
+    echo
+    echo "Options:"
+    echo "  -d DIRECTORY      output directory for .unpk files"
+}
+
 print_file_size()
 {
     echo "$1 size: $2 ($(LC_ALL=C numfmt --to=iec-i --suffix=B --format='%.1f' "$2"))"
 }
 
-f=$1
+outdir=
 
-[ -f "$f" ] || { echo "Error: '$f' is not an accessible file path" >&2 ; exit 1; }
-cdr_basename=$(basename "$f")
-output_file="$(dirname "$f")/$cdr_basename.unpk"
-
-mime_type=$(file "$f" -b --mime-type)
-
-if [[
-    $mime_type == 'application/zip' # X4-X6 with no 'mimetype' file in file-5.42, >=X4 in older versions of file(1)
-    || $mime_type == 'application/x-vnd.corel.draw.document+zip' # X6 in file-5.42
-    || $mime_type == 'application/x-vnd.corel.zcf.draw.document+zip' # >=X7 in file-5.42
-]]
-then
-    extract_dir=$(dirname "$f")/$cdr_basename
-    mkdir -p "$extract_dir/content"
-    unzip -q -j "$f" 'content/*' -d "$extract_dir/content"
-
-    if [ -f "$extract_dir/content/riffData.cdr" ]
+while true
+do
+    # See https://stackoverflow.com/a/13864829
+    if [ -z "${1+x}" ]
     then
-        root_file='content/riffData.cdr' # X4 or X5 version
-    elif [ -f "$extract_dir/content/root.dat" ]
-    then
-        root_file='content/root.dat' # X6+ version
-    else
-        echo "Error: there is no 'content/riffData.cdr' or 'content/root.dat' in the ZIP archive" >&2
+        echo "Error: reached end of arguments before reaching the '--' separator" >&2
+        echo >&2
+        usage >&2
         exit 1
     fi
 
-    printf '%s' 'unpk' > "$output_file"
-    root_size=$(wc -c < "$extract_dir/$root_file")
-    if [[ $root_size -gt 4294967295 ]]
-    then
-        echo "Error: root file '$root_file' has $root_size bytes, maximum supported is 4294967295 bytes" >&2
-        exit 1
-    fi
-    printf '%.8x' "$root_size" | xxd -r -p >> "$output_file"
-
-    if [[ $root_file == 'content/root.dat' ]]
-    then
-        [ -f "$extract_dir/content/dataFileList.dat" ] || { echo "Error: file 'content/dataFileList.dat' does not exist in the archive" >&2 ; exit 1; }
-        mkdir -p "$extract_dir/content/data"
-        unzip -j "$f" 'content/data/*' -d "$extract_dir/content/data"
-
-        while IFS= read -r line || [[ -n $line ]]
-        do
-            [ -f "$extract_dir/content/data/$line" ] || { echo "Error: file 'content/data/$line' listed in 'content/dataFileList.dat' does not exist in the archive" >&2 ; exit 1; }
-            len_name=$(printf '%s' "$line" | wc -c)
-            if [[ $len_name -gt 255 ]]
+    case $1 in
+        --help)
+            usage
+            exit
+            ;;
+        -d)
+            # See https://stackoverflow.com/a/47437572
+            if [ -z "${2-}" ]
             then
-                echo "Warning: file name '$line' ($len_name characters) truncated to 255 characters" >&2
-                len_name=255
-            fi
-            printf '%.2x' "$len_name" | xxd -r -p >> "$output_file"
-            printf '%s' "${line:0:$len_name}" >> "$output_file"
-
-            file_size=$(wc -c < "$extract_dir/content/data/$line")
-            if [[ $file_size -gt 4294967295 ]]
-            then
-                echo "Error: file 'content/data/$line' has $file_size bytes, maximum supported is 4294967295 bytes" >&2
+                echo "Error: -d requires a non-empty option argument" >&2
+                echo >&2
+                usage >&2
                 exit 1
             fi
-            printf '%.8x' "$file_size" | xxd -r -p >> "$output_file"
-            cat "$extract_dir/content/data/$line" >> "$output_file"
+            outdir=$2
+            shift
+            ;;
+        --)
+            shift
+            break
+            ;;
+        *)
+            echo "Error: got unknown option '$1' before reaching the '--' separator" >&2
+            echo >&2
+            usage >&2
+            exit 1
+    esac
+    shift
+done
 
-        done < "$extract_dir/content/dataFileList.dat"
-    fi
-
-    cat "$extract_dir/$root_file" >> "$output_file"
-
-    final_size=$(wc -c < "$output_file")
-    print_file_size "Done, output file: '$output_file'," "$final_size"
-
-elif [[ $(file "$f" -b) == 'RIFF (little-endian) data'* ]]
+if [[ $# -lt 1 ]]
 then
-    printf '%s' 'unpk' > "$output_file"
-    root_size=$(wc -c < "$f")
-    if [[ $root_size -gt 4294967295 ]]
-    then
-        echo "Error: root file '$f' has $root_size bytes, maximum supported is 4294967295 bytes" >&2
-        exit 1
-    fi
-    printf '%.8x' "$root_size" | xxd -r -p >> "$output_file"
-    cat "$f" >> "$output_file"
-
-    final_size=$(wc -c < "$output_file")
-    print_file_size "Done, output file: '$output_file'," "$final_size"
-else
-    echo "Error: not a CDR format at all (\`file\` says '$(file "$f" -b)')" >&2
+    echo "Error: at least one FILE must be given" >&2
+    echo >&2
+    usage >&2
     exit 1
 fi
+
+if [ -z "$outdir" ]
+then
+    outdir=.
+else
+    outdir=${outdir%/}
+fi
+
+mkdir -p -- "$outdir"
+
+temp_dir=$(mktemp -d)
+echo "created '$temp_dir'"
+trap 'rm -rf -- "$temp_dir" && echo "removed '\''$temp_dir'\''" || echo "failed to remove '\''$temp_dir'\''"' EXIT
+
+# See https://stackoverflow.com/a/13864829
+while [ -n "${1+x}" ]
+do
+    f=$1
+    shift
+
+    if [ ! -f "$f" ]
+    then
+        echo "Error: '$f' is not an accessible file path" >&2
+        continue
+    fi
+    cdr_basename=$(basename "$f")
+    output_file=$outdir/$cdr_basename.unpk
+
+    if [ -f "$output_file" ]
+    then
+        echo "Output file '$output_file' already exists, skipping" >&2
+        continue
+    fi
+
+    mime_type=$(file "$f" -b --mime-type)
+
+    if [[
+        $mime_type == 'application/zip' # X4-X6 with no 'mimetype' file in file-5.42, >=X4 in older versions of file(1)
+        || $mime_type == 'application/x-vnd.corel.draw.document+zip' # X6 in file-5.42
+        || $mime_type == 'application/x-vnd.corel.zcf.draw.document+zip' # >=X7 in file-5.42
+    ]]
+    then
+        extract_dir=$temp_dir/$cdr_basename
+        mkdir -p -- "$extract_dir/content"
+        unzip -q -j "$f" 'content/*' -d "$extract_dir/content"
+
+        if [ -f "$extract_dir/content/riffData.cdr" ]
+        then
+            root_file='content/riffData.cdr' # X4 or X5 version
+        elif [ -f "$extract_dir/content/root.dat" ]
+        then
+            root_file='content/root.dat' # X6+ version
+        else
+            echo "Error: there is no 'content/riffData.cdr' or 'content/root.dat' in the ZIP archive [$f]" >&2
+            rm -rf -- "$extract_dir"
+            continue
+        fi
+
+        printf '%s' 'unpk' > "$output_file"
+        root_size=$(wc -c < "$extract_dir/$root_file")
+        if [[ $root_size -gt 4294967295 ]]
+        then
+            echo "Error: root file '$root_file' has $root_size bytes, maximum supported is 4294967295 bytes [$f]" >&2
+            rm -f -- "$output_file"
+            rm -rf -- "$extract_dir"
+            continue
+        fi
+        printf '%.8x' "$root_size" | xxd -r -p >> "$output_file"
+
+        if [[ $root_file == 'content/root.dat' ]]
+        then
+            if [ ! -f "$extract_dir/content/dataFileList.dat" ]
+            then
+                echo "Error: file 'content/dataFileList.dat' does not exist in the archive [$f]" >&2
+                rm -f -- "$output_file"
+                rm -rf -- "$extract_dir"
+                continue
+            fi
+            mkdir -p "$extract_dir/content/data"
+            unzip -q -j "$f" 'content/data/*' -d "$extract_dir/content/data"
+
+            while IFS= read -r line || [[ -n $line ]]
+            do
+                if [ ! -f "$extract_dir/content/data/$line" ]
+                then
+                    echo "Error: file 'content/data/$line' listed in 'content/dataFileList.dat' does not exist in the archive [$f]" >&2
+                    rm -f -- "$output_file"
+                    rm -rf -- "$extract_dir"
+                    continue
+                fi
+                len_name=$(printf '%s' "$line" | wc -c)
+                if [[ $len_name -gt 255 ]]
+                then
+                    echo "Warning: file name '$line' ($len_name characters) truncated to 255 characters [$f]" >&2
+                    len_name=255
+                fi
+                printf '%.2x' "$len_name" | xxd -r -p >> "$output_file"
+                printf '%s' "${line:0:$len_name}" >> "$output_file"
+
+                file_size=$(wc -c < "$extract_dir/content/data/$line")
+                if [[ $file_size -gt 4294967295 ]]
+                then
+                    echo "Error: file 'content/data/$line' has $file_size bytes, maximum supported is 4294967295 bytes [$f]" >&2
+                    rm -f -- "$output_file"
+                    rm -rf -- "$extract_dir"
+                    continue
+                fi
+                printf '%.8x' "$file_size" | xxd -r -p >> "$output_file"
+                cat "$extract_dir/content/data/$line" >> "$output_file"
+
+            done < "$extract_dir/content/dataFileList.dat"
+        fi
+
+        cat "$extract_dir/$root_file" >> "$output_file"
+
+        final_size=$(wc -c < "$output_file")
+        print_file_size "Done, output file: '$output_file'," "$final_size"
+
+    elif [[ $(file "$f" -b) == 'RIFF (little-endian) data'* ]]
+    then
+        printf '%s' 'unpk' > "$output_file"
+        root_size=$(wc -c < "$f")
+        if [[ $root_size -gt 4294967295 ]]
+        then
+            echo "Error: root file '$f' has $root_size bytes, maximum supported is 4294967295 bytes" >&2
+            rm -f -- "$output_file"
+            rm -rf -- "$extract_dir"
+            continue
+        fi
+        printf '%.8x' "$root_size" | xxd -r -p >> "$output_file"
+        cat "$f" >> "$output_file"
+
+        final_size=$(wc -c < "$output_file")
+        print_file_size "Done, output file: '$output_file'," "$final_size"
+    else
+        echo "Error: '$f' is not a CDR format at all (\`file\` says '$(file "$f" -b)')" >&2
+        continue
+    fi
+done
