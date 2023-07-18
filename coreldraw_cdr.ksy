@@ -725,12 +725,18 @@ types:
               - id: r0_raw
                 type: f8
             instances:
-              width:
+              width_raw:
                 value: _parent.x0.value * scale_x / 2.0
-              height:
+              width:
+                value: '(width_raw < 0.0) ? -width_raw : width_raw'
+              height_raw:
                 value: _parent.y0.value * scale_y / 2.0
+              height:
+                value: '(height_raw < 0.0) ? -height_raw : height_raw'
+              min_dimension:
+                value: '(width < height) ? width : height'
               scale:
-                value: 'scale_with == 0 ? 1 : 254000.0'
+                value: 'scale_with == 0 ? min_dimension : 254000.0'
               r3:
                 value: r3_raw * scale
               r2:
