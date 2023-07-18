@@ -245,7 +245,7 @@ types:
             '"bmp "': bmp_chunk_data
             # '"bmpf"': bmpf_chunk_data
             # '"ppdt"': ppdt_chunk_data
-            # '"ftil"': ftil_chunk_data
+            '"ftil"': ftil_chunk_data
             # '"iccd"': iccd_chunk_data
             '"bbox"': bbox_chunk_data
             '"obbx"': obbx_chunk_data
@@ -945,36 +945,12 @@ types:
             type: trafo
             if: is_trafo
       trafo:
-        doc: |
-          See <https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/matrix#syntax>
-          for an explanation of matrix parameter labels.
-        doc-ref: https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_utils.py#L29
         seq:
           - id: unknown1
             if: _root.version >= 600
             size: 6
-          - id: a
-            -orig-id: m11 # UniConvertor
-            type: f8
-          - id: c
-            -orig-id: m12 # UniConvertor
-            type: f8
-          - id: tx_raw
-            type: f8
-          - id: b
-            -orig-id: m21 # UniConvertor
-            type: f8
-          - id: d
-            -orig-id: m22 # UniConvertor
-            type: f8
-          - id: ty_raw
-            type: f8
-        instances:
-          tx:
-            value: 'tx_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
-          ty:
-            value: 'ty_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
-
+          - id: matrix
+            type: matrix
   outl_chunk_data:
     seq:
       - id: outl_id
@@ -1874,7 +1850,10 @@ types:
 
   # bmpf_chunk_data: {}
   # ppdt_chunk_data: {}
-  # ftil_chunk_data: {}
+  ftil_chunk_data:
+    seq:
+      - id: matrix
+        type: matrix
   # iccd_chunk_data: {}
   bbox_chunk_data:
     doc: |
@@ -2826,6 +2805,33 @@ types:
             0b00: angle
             0b01: smooth
             0b10: symmetrical
+  matrix:
+    doc: |
+      See <https://developer.mozilla.org/en-US/docs/Web/CSS/transform-function/matrix#syntax>
+      for an explanation of matrix parameter labels.
+    doc-ref: https://github.com/sk1project/uniconvertor/blob/973d5b6f/src/uc2/formats/cdr/cdr_utils.py#L29
+    seq:
+      - id: a
+        -orig-id: m11 # UniConvertor
+        type: f8
+      - id: c
+        -orig-id: m12 # UniConvertor
+        type: f8
+      - id: tx_raw
+        type: f8
+      - id: b
+        -orig-id: m21 # UniConvertor
+        type: f8
+      - id: d
+        -orig-id: m22 # UniConvertor
+        type: f8
+      - id: ty_raw
+        type: f8
+    instances:
+      tx:
+        value: 'tx_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
+      ty:
+        value: 'ty_raw / (_root.version < 600 ? 1000.0 : 254000.0)'
   angle:
     seq:
       - id: raw
