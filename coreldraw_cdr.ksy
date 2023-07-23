@@ -2308,9 +2308,12 @@ types:
               - id: style_id
                 type: u4
               - size: 1
-              - size: 1
+              - id: has_unknown_raw
+                type: u1
                 # NOTE: libcdr checks for versions > 1200 instead, which seems like a mistake.
                 if: _root.version >= 1300 and _parent.frame_flag
+              - size: 64
+                if: has_unknown
               - id: num_styles
                 type: u4
               - id: styles
@@ -2333,6 +2336,8 @@ types:
               - size: num_chars * 24
                 if: has_path
             instances:
+              has_unknown:
+                value: _root.version >= 1300 and _parent.frame_flag and has_unknown_raw.as<u1> != 0
               num_bytes_in_text:
                 value: '_root.version >= 1200 ? num_bytes_in_text_raw : num_chars'
               has_path:
@@ -2478,7 +2483,7 @@ types:
                 if: flag == 1
               - id: paragraph_style
                 type: style_string
-                if: _parent.style_layout_version < 1700 and not _parent.frame_flag
+                if: _parent.style_layout_version >= 1600 and _parent.style_layout_version < 1700 and not _parent.frame_flag
               - id: default_style
                 type: style_string
               - id: num_records
@@ -2514,7 +2519,7 @@ types:
                 type: u2
               - id: url_properties
                 type: url_props
-                if: st_flag_2 == 0x3fff and (st_flag_3 & 0x11) == 0x11
+                if: st_flag_2 == 0x3fff and (st_flag_3 & 0x01) != 0
               - id: locale
                 type: text_locale
                 if: (st_flag_3 & 0x04) != 0
